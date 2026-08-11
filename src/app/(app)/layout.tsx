@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }));
 
   return (
-    <AppShell usuario={{ nombre: usuario.nombre, rol: usuario.rol }} proyectos={proyectos}>
+    <AppShell usuario={{ uid: usuario.uid, nombre: usuario.nombre, rol: usuario.rol }} proyectos={proyectos}>
       {children}
     </AppShell>
   );

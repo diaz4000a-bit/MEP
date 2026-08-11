@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
+import { BarraJornada } from "@/components/jornada/barra-jornada";
 import { icono } from "@/lib/icons";
 import type { Rol } from "@/types";
 import { NavContent } from "./nav-content";
@@ -15,18 +16,19 @@ interface ProyectoResumen {
   avanceTotal: number;
 }
 
+const IconMenu = icono("ti-menu-2");
+const IconSearch = icono("ti-search");
+
 export function AppShell({
   usuario,
   proyectos,
   children,
 }: {
-  usuario: { nombre: string; rol: Rol };
+  usuario: { uid: string; nombre: string; rol: Rol };
   proyectos: ProyectoResumen[];
   children: React.ReactNode;
 }) {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
-  const IconMenu = icono("ti-menu-2");
-  const IconSearch = icono("ti-search");
 
   return (
     <div className="flex min-h-screen">
@@ -73,6 +75,8 @@ export function AppShell({
 
           <UserMenu nombre={usuario.nombre} rol={usuario.rol} />
         </header>
+
+        <BarraJornada uid={usuario.uid} proyectos={proyectos} />
 
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>

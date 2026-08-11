@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { icono } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import type { Icon as TablerIcon } from "@tabler/icons-react";
 import type { Rol } from "@/types";
 
 interface ProyectoResumen {
@@ -15,24 +16,27 @@ interface ProyectoResumen {
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  Icon: TablerIcon;
   soloRoles?: Rol[];
 }
 
+const IconBolt = icono("ti-bolt");
+const IconFolder = icono("ti-folders");
+
 const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "ti-layout-dashboard" },
-  { href: "/mi-trabajo", label: "Mi trabajo", icon: "ti-clipboard-list" },
-  { href: "/proyectos", label: "Proyectos", icon: "ti-folders" },
-  { href: "/jornadas", label: "Jornadas", icon: "ti-clock-hour-4" },
-  { href: "/guia", label: "Guía", icon: "ti-school" },
-  { href: "/equipo", label: "Equipo", icon: "ti-users" },
-  { href: "/usuarios", label: "Usuarios", icon: "ti-user-cog", soloRoles: ["admin"] },
+  { href: "/dashboard", label: "Dashboard", Icon: icono("ti-layout-dashboard") },
+  { href: "/mi-trabajo", label: "Mi trabajo", Icon: icono("ti-clipboard-list") },
+  { href: "/proyectos", label: "Proyectos", Icon: icono("ti-folders") },
+  { href: "/jornadas", label: "Jornadas", Icon: icono("ti-clock-hour-4") },
+  { href: "/guia", label: "Guía", Icon: icono("ti-school") },
+  { href: "/equipo", label: "Equipo", Icon: icono("ti-users") },
+  { href: "/usuarios", label: "Usuarios", Icon: icono("ti-user-cog"), soloRoles: ["admin"] },
 ];
 
 function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
   const activo = pathname === item.href || pathname.startsWith(item.href + "/");
-  const Icon = icono(item.icon);
+  const Icon = item.Icon;
   return (
     <Link
       href={item.href}
@@ -58,8 +62,6 @@ export function NavContent({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const IconBolt = icono("ti-bolt");
-  const IconFolder = icono("ti-folders");
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">

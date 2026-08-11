@@ -37,7 +37,13 @@ service cloud.firestore {
     }
 
     match /jornadas/{jid} {
-      allow read:   if activo() && (resource.data.uid == yo() || esGestor());
+      // `list` separado de `get`: Firestore no puede probar que una query cumple una regla
+      // con OR + get() ajeno al resource, así que la consulta en vivo del cliente (¿tengo
+      // una jornada abierta?) solo puede pedir las suyas. Los reportes de equipo (gestor
+      // viendo jornadas ajenas) se sirven desde el servidor con el Admin SDK, que no pasa
+      // por reglas.
+      allow get:    if activo() && (resource.data.uid == yo() || esGestor());
+      allow list:   if activo() && request.auth.uid == resource.data.uid;
       allow create: if activo() && request.resource.data.uid == yo();
       allow update: if activo() && (resource.data.uid == yo() || esGestor());
       allow delete: if esAdmin();
