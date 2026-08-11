@@ -3,6 +3,8 @@ import type { Rol } from '@/types';
 export const ACCIONES = {
   crearProyecto: ['admin', 'coordinador'],
   borrarProyecto: ['admin', 'coordinador'],
+  crearTarea: ['admin', 'coordinador'],
+  eliminarTarea: ['admin', 'coordinador'],
   editarTareaAjena: ['admin', 'coordinador'],
   editarTareaPropia: ['admin', 'coordinador', 'ingeniero', 'modelador'],
   verJornadasAjenas: ['admin', 'coordinador'],
