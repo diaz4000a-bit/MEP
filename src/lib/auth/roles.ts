@@ -1,5 +1,13 @@
 import type { Rol } from '@/types';
 
+export const ETIQUETA_ROL: Record<Rol, string> = {
+  admin: 'Admin',
+  coordinador: 'Coordinador',
+  ingeniero: 'Ingeniero',
+  modelador: 'Modelador',
+  usuario: 'Usuario',
+};
+
 export const ACCIONES = {
   crearProyecto: ['admin', 'coordinador'],
   borrarProyecto: ['admin', 'coordinador'],

@@ -13,15 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { auth } from "@/lib/firebase/client";
+import { ETIQUETA_ROL } from "@/lib/auth/roles";
 import type { Rol } from "@/types";
-
-const ETIQUETA_ROL: Record<Rol, string> = {
-  admin: "Admin",
-  coordinador: "Coordinador",
-  ingeniero: "Ingeniero",
-  modelador: "Modelador",
-  usuario: "Usuario",
-};
 
 function iniciales(nombre: string) {
   const partes = nombre.trim().split(/\s+/);
