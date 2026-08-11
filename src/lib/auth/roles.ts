@@ -17,6 +17,7 @@ export const ACCIONES = {
   editarTareaPropia: ['admin', 'coordinador', 'ingeniero', 'modelador'],
   verJornadasAjenas: ['admin', 'coordinador'],
   gestionarUsuarios: ['admin'],
+  gestionarEquipo: ['admin', 'coordinador'],
 } satisfies Record<string, Rol[]>;
 
 export function puede(rol: Rol, accion: keyof typeof ACCIONES) {
