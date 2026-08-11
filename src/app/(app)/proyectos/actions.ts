@@ -33,7 +33,7 @@ function proyectoBase(id: string, datos: DatosProyecto, ahora: number): Proyecto
     software: datos.software || "Revit",
     estado: "Sin iniciar",
     notas: "",
-    zonas: [],
+    zonas: ["Torre A", "Torre B", "Comunal", "Portería", "Urbanismo"],
     creado: ahora,
     actualizado: ahora,
     totalTareas: 0,
@@ -243,5 +243,50 @@ export async function eliminarTarea(proyectoId: string, tareaId: string) {
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
   await proyectoRef.collection("tareas").doc(tareaId).delete();
   await recalcularProyecto(proyectoId, Date.now());
+  revalidatePath(`/proyectos/${proyectoId}`);
+}
+
+export async function agregarZona(proyectoId: string, nombre: string) {
+  const usuario = await exigirUsuario();
+  await exigirPermiso(usuario, "crearProyecto");
+
+  const limpio = nombre.trim();
+  if (!limpio) throw new Error("El nombre de la zona es obligatorio.");
+
+  const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
+  await adminDb.runTransaction(async (tx) => {
+    const snap = await tx.get(proyectoRef);
+    if (!snap.exists) throw new Error("El proyecto ya no existe.");
+    const zonas = ((snap.data() as Proyecto).zonas ?? []).slice();
+    if (zonas.some((z) => z.toLowerCase() === limpio.toLowerCase())) {
+      throw new Error("Esa zona ya existe.");
+    }
+    zonas.push(limpio);
+    tx.update(proyectoRef, { zonas, actualizado: Date.now() });
+  });
+
+  revalidatePath(`/proyectos/${proyectoId}`);
+}
+
+// Quitar una zona NO borra sus tareas: quedan sin zona (igual que la v1).
+export async function eliminarZona(proyectoId: string, zona: string) {
+  const usuario = await exigirUsuario();
+  await exigirPermiso(usuario, "crearProyecto");
+
+  const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
+  const [proyectoSnap, tareasDeZonaSnap] = await Promise.all([
+    proyectoRef.get(),
+    proyectoRef.collection("tareas").where("zona", "==", zona).get(),
+  ]);
+  if (!proyectoSnap.exists) throw new Error("El proyecto ya no existe.");
+
+  const batch = adminDb.batch();
+  const zonas = ((proyectoSnap.data() as Proyecto).zonas ?? []).filter((z) => z !== zona);
+  batch.update(proyectoRef, { zonas, actualizado: Date.now() });
+  for (const doc of tareasDeZonaSnap.docs) {
+    batch.update(doc.ref, { zona: null, actualizado: Date.now() });
+  }
+  await batch.commit();
+
   revalidatePath(`/proyectos/${proyectoId}`);
 }

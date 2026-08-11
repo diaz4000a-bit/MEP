@@ -34,6 +34,7 @@ export function TareaDialog({
   onOpenChange,
   proyectoId,
   tarea,
+  zonaPreset,
   zonasDisponibles,
   etapasDisponibles,
   responsablesDisponibles,
@@ -42,6 +43,8 @@ export function TareaDialog({
   onOpenChange: (open: boolean) => void;
   proyectoId: string;
   tarea?: Tarea;
+  /** Zona con la que arranca una tarea NUEVA (p. ej. al crear desde la vista de una zona). */
+  zonaPreset?: string;
   zonasDisponibles: string[];
   etapasDisponibles: string[];
   responsablesDisponibles: Responsable[];
@@ -52,7 +55,7 @@ export function TareaDialog({
   const [nombre, setNombre] = useState(tarea?.nombre ?? "");
   const [grupo, setGrupo] = useState<GrupoId>(tarea?.grupo ?? "01-gestion");
   const [subgrupo, setSubgrupo] = useState(tarea?.subgrupo ?? "");
-  const [zona, setZona] = useState(tarea?.zona ?? "");
+  const [zona, setZona] = useState(tarea?.zona ?? zonaPreset ?? "");
   const [etapa, setEtapa] = useState(tarea?.etapa ?? "");
   const [categoria, setCategoria] = useState<Categoria>(tarea?.categoria ?? "Modelado");
   const [responsable, setResponsable] = useState(tarea?.responsable ?? "");

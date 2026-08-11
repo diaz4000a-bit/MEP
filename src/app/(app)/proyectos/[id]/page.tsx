@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ProyectoHeader } from "@/components/proyectos/proyecto-header";
 import { ProyectoStats } from "@/components/proyectos/proyecto-stats";
 import { ProyectoTimeline } from "@/components/proyectos/proyecto-timeline";
-import { ZonasCardStub } from "@/components/proyectos/zonas-card-stub";
+import { ZonasCard } from "@/components/proyectos/zonas-card";
 import { TareasTabla } from "@/components/tareas/tareas-tabla";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
@@ -42,7 +42,12 @@ export default async function ProyectoDetallePage({ params }: { params: Promise<
   return (
     <div className="flex flex-col gap-4">
       <ProyectoHeader proyecto={proyecto} puedeBorrar={puede(usuario.rol, "borrarProyecto")} />
-      <ZonasCardStub zonas={zonasProyecto} />
+      <ZonasCard
+        proyectoId={id}
+        zonas={proyecto.zonas ?? []}
+        tareas={tareas}
+        puedeGestionar={puede(usuario.rol, "crearProyecto")}
+      />
       <ProyectoStats proyectoId={id} notas={proyecto.notas} tareas={tareas} />
       <ProyectoTimeline tareas={tareas} />
       <TareasTabla

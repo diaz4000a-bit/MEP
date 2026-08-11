@@ -61,6 +61,7 @@ export function TareasTabla({
   puedeEliminar,
   puedeEditarAjenas,
   uidActual,
+  zonaFija,
 }: {
   proyectoId: string;
   zonasProyecto: string[];
@@ -70,8 +71,10 @@ export function TareasTabla({
   puedeEliminar: boolean;
   puedeEditarAjenas: boolean;
   uidActual: string;
+  /** Si viene definido, la tabla queda fija a esa zona (null = "Sin zona") — usado por la vista de zona. */
+  zonaFija?: string | null;
 }) {
-  const [tareas, setTareas] = useState(tareasIniciales);
+  const [tareasProyecto, setTareasProyecto] = useState(tareasIniciales);
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VACIOS);
   const [agrupar, setAgrupar] = useState<Agrupacion>("grupo");
   const [dialogAbierto, setDialogAbierto] = useState(false);
@@ -81,14 +84,22 @@ export function TareasTabla({
     const q = query(collection(db, `proyectos/${proyectoId}/tareas`), orderBy("actualizado", "desc"));
     return onSnapshot(
       q,
-      (snap) => setTareas(snap.docs.map((d) => d.data() as Tarea)),
+      (snap) => setTareasProyecto(snap.docs.map((d) => d.data() as Tarea)),
       () => toast.error("Se perdió la sincronización en tiempo real de las tareas."),
     );
   }, [proyectoId]);
 
+  const tareas = useMemo(
+    () =>
+      zonaFija === undefined
+        ? tareasProyecto
+        : tareasProyecto.filter((t) => (zonaFija === null ? !t.zona : t.zona === zonaFija)),
+    [tareasProyecto, zonaFija],
+  );
+
   const zonasDisponibles = useMemo(
-    () => [...new Set([...zonasProyecto, ...tareas.map((t) => t.zona).filter((z): z is string => !!z)])],
-    [zonasProyecto, tareas],
+    () => [...new Set([...zonasProyecto, ...tareasProyecto.map((t) => t.zona).filter((z): z is string => !!z)])],
+    [zonasProyecto, tareasProyecto],
   );
   const etapasDisponibles = useMemo(
     () => [...new Set(tareas.map((t) => t.etapa).filter((e): e is string => !!e))],
@@ -159,7 +170,7 @@ export function TareasTabla({
           onCambio={(v) => setFiltros((f) => ({ ...f, grupo: v }))}
           opciones={GRUPOS.map((g) => ({ value: g.id, label: g.nombre }))}
         />
-        {zonasDisponibles.length > 0 && (
+        {zonaFija === undefined && zonasDisponibles.length > 0 && (
           <FiltroSelect
             label="Zona"
             valor={filtros.zona}
@@ -239,6 +250,7 @@ export function TareasTabla({
         onOpenChange={setDialogAbierto}
         proyectoId={proyectoId}
         tarea={tareaEditando}
+        zonaPreset={zonaFija ?? undefined}
         zonasDisponibles={zonasDisponibles}
         etapasDisponibles={etapasDisponibles}
         responsablesDisponibles={responsablesDisponibles}
