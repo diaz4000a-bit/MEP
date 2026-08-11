@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { actualizarEstadoTarea, actualizarVerificacion, eliminarTarea } from "@/app/(app)/proyectos/actions";
+import { Seccion, SeccionLista, SinDato } from "@/components/contenido/seccion-card";
 import { db } from "@/lib/firebase/client";
 import { colorAvance, ESTILO_ESTADO, ESTILO_PRIORIDAD, fechaHoraLegible, fechaLegible } from "@/lib/tareas";
 import type { ContenidoTarea } from "@/lib/contenido";
@@ -412,38 +413,6 @@ export function FichaTarea({
   );
 }
 
-function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-      <h3 className="text-sm font-medium">{titulo}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{children}</p>
-    </div>
-  );
-}
-
-function SeccionLista({ titulo, items, numerada }: { titulo: string; items: string[]; numerada?: boolean }) {
-  return (
-    <div className="rounded-xl bg-card p-4 ring-1 ring-foreground/10">
-      <h3 className="text-sm font-medium">{titulo}</h3>
-      {items.length === 0 ? (
-        <SinDato className="mt-2" />
-      ) : numerada ? (
-        <ol className="mt-2 flex list-decimal flex-col gap-1.5 pl-4 text-sm text-muted-foreground">
-          {items.map((it, i) => (
-            <li key={i}>{it}</li>
-          ))}
-        </ol>
-      ) : (
-        <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-4 text-sm text-muted-foreground">
-          {items.map((it, i) => (
-            <li key={i}>{it}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 function Dato({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex justify-between gap-3">
@@ -451,8 +420,4 @@ function Dato({ label, children }: { label: string; children: ReactNode }) {
       <dd className="text-right font-medium">{children}</dd>
     </div>
   );
-}
-
-function SinDato({ className }: { className?: string }) {
-  return <span className={`text-sm text-muted-foreground italic ${className ?? ""}`}>Sin información.</span>;
 }
