@@ -52,7 +52,12 @@ export function ProyectoHeader({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <InformeDialog proyectoId={proyecto.id} responsables={responsables} />
-          <Button variant="outline" size="sm" render={<a href={`/api/proyectos/${proyecto.id}/exportar`} />}>
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={<a href={`/api/proyectos/${proyecto.id}/exportar`} />}
+          >
             Exportar JSON
           </Button>
           {puedeBorrar && (
