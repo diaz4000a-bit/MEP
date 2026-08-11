@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function auth0()    { return request.auth != null; }
+    function yo()       { return request.auth.uid; }
+    function datos()    { return get(/databases/$(database)/documents/usuarios/$(yo())).data; }
+    function rol()      { return datos().rol; }
+    function activo()   { return auth0() && datos().activo == true; }
+    function esAdmin()  { return activo() && rol() == 'admin'; }
+    function esGestor() { return activo() && rol() in ['admin', 'coordinador']; }
+
+    match /usuarios/{uid} {
+      allow read:   if activo();
+      allow create: if auth0() && yo() == uid
+                    && request.resource.data.rol == 'usuario'    // nadie se autoasciende
+                    && request.resource.data.activo == false;    // un admin lo activa
+      allow update: if esAdmin()
+                    || (activo() && yo() == uid
+                        && request.resource.data.rol == resource.data.rol
+                        && request.resource.data.activo == resource.data.activo);
+      allow delete: if esAdmin();
+    }
+
+    match /proyectos/{pid} {
+      allow read:           if activo();
+      allow create, delete: if esGestor();
+      allow update:         if esGestor();
+
+      match /tareas/{tid} {
+        allow read:           if activo();
+        allow create, delete: if esGestor();
+        // ← esto es lo que la v1 NO podía expresar:
+        allow update: if esGestor()
+                      || (activo() && resource.data.responsableUid == yo());
+      }
+    }
+
+    match /jornadas/{jid} {
+      allow read:   if activo() && (resource.data.uid == yo() || esGestor());
+      allow create: if activo() && request.resource.data.uid == yo();
+      allow update: if activo() && (resource.data.uid == yo() || esGestor());
+      allow delete: if esAdmin();
+    }
+
+    match /config/{doc} {
+      allow read:  if activo();
+      allow write: if esGestor();
+    }
+  }
+}

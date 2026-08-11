@@ -1,0 +1,15 @@
+{
+  "indexes": [
+    { "collectionGroup": "jornadas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "uid", "order": "ASCENDING" }, { "fieldPath": "fecha", "order": "DESCENDING" }]},
+    { "collectionGroup": "jornadas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "proyectoId", "order": "ASCENDING" }, { "fieldPath": "fecha", "order": "DESCENDING" }]},
+    { "collectionGroup": "jornadas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "uid", "order": "ASCENDING" }, { "fieldPath": "estado", "order": "ASCENDING" }]},
+    { "collectionGroup": "tareas", "queryScope": "COLLECTION_GROUP", "fields": [
+      { "fieldPath": "responsableUid", "order": "ASCENDING" }, { "fieldPath": "fechaLimite", "order": "ASCENDING" }]},
+    { "collectionGroup": "tareas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "grupo", "order": "ASCENDING" }, { "fieldPath": "estado", "order": "ASCENDING" }]}
+  ],
+  "fieldOverrides": []
+}
