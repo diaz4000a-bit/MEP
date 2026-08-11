@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run validar && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validar": "tsx scripts/validar-contenido.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
