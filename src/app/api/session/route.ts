@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { adminAuth } from '@/lib/firebase/admin';
+import { adminAuth, adminDb } from '@/lib/firebase/admin';
 
 const DURACION_MS = 60 * 60 * 24 * 5 * 1000; // 5 días
 
@@ -21,6 +21,9 @@ export async function POST(request: Request) {
     path: '/',
     maxAge: DURACION_MS / 1000,
   });
+
+  await adminDb.doc(`usuarios/${decoded.uid}`).update({ ultimoAcceso: Date.now() });
+
   return Response.json({ ok: true });
 }
 
