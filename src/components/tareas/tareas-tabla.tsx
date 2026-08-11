@@ -1,6 +1,7 @@
 "use client";
 
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -231,6 +232,7 @@ export function TareasTabla({
           </TableHeader>
           <TableBody>
             <CuerpoTabla
+              proyectoId={proyectoId}
               visibles={visibles}
               todas={tareas}
               zonasProyecto={zonasProyecto}
@@ -289,6 +291,7 @@ function FiltroSelect({
 }
 
 function CuerpoTabla({
+  proyectoId,
   visibles,
   todas,
   zonasProyecto,
@@ -298,6 +301,7 @@ function CuerpoTabla({
   puedeEliminar,
   puedeEditar,
 }: {
+  proyectoId: string;
   visibles: Tarea[];
   todas: Tarea[];
   zonasProyecto: string[];
@@ -321,7 +325,15 @@ function CuerpoTabla({
     return (
       <>
         {visibles.map((t) => (
-          <FilaTarea key={t.id} tarea={t} onEditar={onEditar} onEliminar={onEliminar} puedeEliminar={puedeEliminar} puedeEditar={puedeEditar(t)} />
+          <FilaTarea
+            key={t.id}
+            proyectoId={proyectoId}
+            tarea={t}
+            onEditar={onEditar}
+            onEliminar={onEliminar}
+            puedeEliminar={puedeEliminar}
+            puedeEditar={puedeEditar(t)}
+          />
         ))}
       </>
     );
@@ -369,7 +381,15 @@ function CuerpoTabla({
               </TableCell>
             </TableRow>
             {ts.map((t) => (
-              <FilaTarea key={t.id} tarea={t} onEditar={onEditar} onEliminar={onEliminar} puedeEliminar={puedeEliminar} puedeEditar={puedeEditar(t)} />
+              <FilaTarea
+                key={t.id}
+                proyectoId={proyectoId}
+                tarea={t}
+                onEditar={onEditar}
+                onEliminar={onEliminar}
+                puedeEliminar={puedeEliminar}
+                puedeEditar={puedeEditar(t)}
+              />
             ))}
           </Fragment>
         );
@@ -379,12 +399,14 @@ function CuerpoTabla({
 }
 
 function FilaTarea({
+  proyectoId,
   tarea: t,
   onEditar,
   onEliminar,
   puedeEliminar,
   puedeEditar,
 }: {
+  proyectoId: string;
   tarea: Tarea;
   onEditar: (t: Tarea) => void;
   onEliminar: (t: Tarea) => void;
@@ -398,7 +420,9 @@ function FilaTarea({
   return (
     <TableRow className={vencida ? "bg-estado-bloqueada/5" : proxima ? "bg-prioridad-media/5" : undefined}>
       <TableCell>
-        <div className="font-medium">{t.nombre}</div>
+        <Link href={`/proyectos/${proyectoId}/tarea/${t.id}`} className="font-medium hover:underline">
+          {t.nombre}
+        </Link>
         {t.estado === "Bloqueada" && t.bloqueadoPor && (
           <div className="text-xs text-estado-bloqueada">🔒 {t.bloqueadoPor}</div>
         )}

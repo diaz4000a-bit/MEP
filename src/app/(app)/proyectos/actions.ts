@@ -236,6 +236,85 @@ export async function actualizarTarea(proyectoId: string, tareaId: string, datos
   revalidatePath(`/proyectos/${proyectoId}`);
 }
 
+export async function actualizarEstadoTarea(
+  proyectoId: string,
+  tareaId: string,
+  estado: Tarea["estado"],
+  porcentaje: number,
+) {
+  const usuario = await exigirUsuario();
+
+  const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
+  const tareaRef = proyectoRef.collection("tareas").doc(tareaId);
+  const ahora = Date.now();
+
+  await adminDb.runTransaction(async (tx) => {
+    const tareaSnap = await tx.get(tareaRef);
+    if (!tareaSnap.exists) throw new Error("La tarea ya no existe.");
+    const actual = tareaSnap.data() as Tarea;
+
+    const puedeAjena = puede(usuario.rol, "editarTareaAjena");
+    const puedePropia = puede(usuario.rol, "editarTareaPropia") && actual.responsableUid === usuario.uid;
+    if (!puedeAjena && !puedePropia) {
+      throw new Error("No tienes permiso para editar esta tarea.");
+    }
+
+    const todasSnap = await tx.get(proyectoRef.collection("tareas"));
+
+    const huboCambio = porcentaje !== actual.porcentaje || estado !== actual.estado;
+    const historial = huboCambio
+      ? [...actual.historial, { f: ahora, p: porcentaje, e: estado }].slice(-60)
+      : actual.historial;
+
+    const actualizada: Tarea = {
+      ...actual,
+      estado,
+      porcentaje,
+      fechaCompletada:
+        estado === "Completada" ? actual.fechaCompletada || new Date().toISOString().slice(0, 10) : "",
+      historial,
+      actualizado: ahora,
+    };
+
+    const otras = todasSnap.docs.filter((d) => d.id !== tareaId).map((d) => d.data() as Tarea);
+    const todas = [...otras, actualizada];
+
+    tx.update(tareaRef, actualizada as unknown as Record<string, unknown>);
+    tx.update(proyectoRef, {
+      totalTareas: todas.length,
+      tareasCompletadas: todas.filter((t) => t.estado === "Completada").length,
+      avanceTotal: computeAvance(todas),
+      actualizado: ahora,
+    });
+  });
+
+  revalidatePath(`/proyectos/${proyectoId}/tarea/${tareaId}`);
+  revalidatePath(`/proyectos/${proyectoId}`);
+}
+
+export async function actualizarVerificacion(
+  proyectoId: string,
+  tareaId: string,
+  verificacion: Record<number, boolean>,
+) {
+  const usuario = await exigirUsuario();
+
+  const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
+  const tareaRef = proyectoRef.collection("tareas").doc(tareaId);
+  const tareaSnap = await tareaRef.get();
+  if (!tareaSnap.exists) throw new Error("La tarea ya no existe.");
+  const actual = tareaSnap.data() as Tarea;
+
+  const puedeAjena = puede(usuario.rol, "editarTareaAjena");
+  const puedePropia = puede(usuario.rol, "editarTareaPropia") && actual.responsableUid === usuario.uid;
+  if (!puedeAjena && !puedePropia) {
+    throw new Error("No tienes permiso para editar esta tarea.");
+  }
+
+  await tareaRef.update({ verificacion, actualizado: Date.now() });
+  revalidatePath(`/proyectos/${proyectoId}/tarea/${tareaId}`);
+}
+
 export async function eliminarTarea(proyectoId: string, tareaId: string) {
   const usuario = await exigirUsuario();
   await exigirPermiso(usuario, "eliminarTarea");
