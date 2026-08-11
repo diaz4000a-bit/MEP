@@ -130,6 +130,25 @@ export interface Jornada {
   actualizado: number;
 }
 
+export type DiaSemana = 'lunes' | 'martes' | 'miercoles' | 'jueves' | 'viernes' | 'sabado';
+
+export interface BloqueHorario {
+  inicio: string;   // 'HH:mm'
+  fin: string;      // 'HH:mm'
+}
+
+export interface DiaHorario {
+  manana: BloqueHorario | null;
+  tarde: BloqueHorario | null;
+}
+
+/** Horario semanal objetivo de un empleado. Documento en `horarios/{uid}`. */
+export interface HorarioSemanal {
+  uid: string;
+  dias: Record<DiaSemana, DiaHorario>;
+  actualizado: number;
+}
+
 export interface Leccion {
   id: string;                  // 'M1.1'
   titulo: string;

@@ -57,6 +57,52 @@ export async function registrarEntrada(input: {
   revalidatePath("/", "layout");
 }
 
+export async function cambiarProyectoJornada(input: { proyectoId: string; fecha: string }) {
+  const usuario = await exigirUsuario();
+
+  const proyectoSnap = await adminDb.doc(`proyectos/${input.proyectoId}`).get();
+  if (!proyectoSnap.exists) throw new Error("El proyecto ya no existe.");
+  const proyectoNombre = proyectoSnap.data()!.nombre as string;
+
+  const jornadasRef = adminDb.collection("jornadas");
+  const ahora = Date.now();
+
+  await adminDb.runTransaction(async (tx) => {
+    const abiertaSnap = await tx.get(jornadasRef.where("uid", "==", usuario.uid).where("estado", "==", "abierta"));
+    if (abiertaSnap.empty) throw new Error("No tienes una jornada abierta.");
+
+    const actualDoc = abiertaSnap.docs[0];
+    const actual = actualDoc.data() as Jornada;
+    if (actual.proyectoId === input.proyectoId) throw new Error("Ya estás trabajando en ese proyecto.");
+
+    const duracionMin = Math.round((ahora - actual.entrada) / 60000);
+    tx.update(actualDoc.ref, { salida: ahora, duracionMin, estado: "cerrada", actualizado: ahora });
+
+    const nuevaRef = jornadasRef.doc();
+    const nueva: Jornada = {
+      id: nuevaRef.id,
+      uid: usuario.uid,
+      usuarioNombre: usuario.nombre,
+      proyectoId: input.proyectoId,
+      proyectoNombre,
+      fecha: input.fecha,
+      entrada: ahora,
+      salida: null,
+      duracionMin: null,
+      estado: "abierta",
+      tareaId: null,
+      tareaNombre: null,
+      notas: "",
+      creado: ahora,
+      actualizado: ahora,
+    };
+    tx.set(nuevaRef, nueva);
+  });
+
+  revalidatePath("/", "layout");
+  revalidatePath("/jornadas");
+}
+
 async function exigirAccesoJornada(jornadaId: string) {
   const usuario = await exigirUsuario();
   const ref = adminDb.doc(`jornadas/${jornadaId}`);

@@ -53,5 +53,10 @@ service cloud.firestore {
       allow read:  if activo();
       allow write: if esGestor();
     }
+
+    match /horarios/{uid} {
+      allow read:  if activo() && (yo() == uid || esGestor());
+      allow write: if activo() && (yo() == uid || esGestor());
+    }
   }
 }

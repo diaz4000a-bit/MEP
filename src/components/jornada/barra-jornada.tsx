@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { registrarEntrada, registrarSalida } from "@/app/(app)/jornadas/actions";
+import { cambiarProyectoJornada, registrarEntrada, registrarSalida } from "@/app/(app)/jornadas/actions";
 import { db } from "@/lib/firebase/client";
 import { esJornadaColgada, fechaLocalHoy, formatearDuracion, formatearHora } from "@/lib/jornadas";
 import type { Jornada } from "@/types";
@@ -84,6 +84,17 @@ export function BarraJornada({ uid, proyectos }: { uid: string; proyectos: Proye
     salir(jornadaAbierta.id, ms);
   };
 
+  const cambiarProyecto = (nuevoProyectoId: string) => {
+    if (!jornadaAbierta || !nuevoProyectoId || nuevoProyectoId === jornadaAbierta.proyectoId) return;
+    startTransition(async () => {
+      try {
+        await cambiarProyectoJornada({ proyectoId: nuevoProyectoId, fecha: fechaLocalHoy() });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "No se pudo cambiar de proyecto.");
+      }
+    });
+  };
+
   if (jornadaAbierta === undefined) return null; // aún cargando el estado inicial
 
   if (jornadaAbierta) {
@@ -97,9 +108,26 @@ export function BarraJornada({ uid, proyectos }: { uid: string; proyectos: Proye
       >
         <span className={`size-2 rounded-full ${colgada ? "bg-estado-bloqueada" : "bg-estado-completada"}`} />
         <span>
-          {colgada ? "Jornada sin cerrar" : "En jornada"} · {jornadaAbierta.proyectoNombre} · desde{" "}
-          {formatearHora(jornadaAbierta.entrada)} · {formatearDuracion(minutos)}
+          {colgada ? "Jornada sin cerrar" : "En jornada"} · desde {formatearHora(jornadaAbierta.entrada)} ·{" "}
+          {formatearDuracion(minutos)}
         </span>
+        <Select
+          value={jornadaAbierta.proyectoId}
+          items={Object.fromEntries(proyectos.map((p) => [p.id, p.nombre]))}
+          onValueChange={(v) => v && cambiarProyecto(v)}
+          disabled={pending}
+        >
+          <SelectTrigger size="sm" className="min-w-[180px]">
+            <SelectValue placeholder="Selecciona un proyecto" />
+          </SelectTrigger>
+          <SelectContent>
+            {proyectos.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           size="sm"
           variant="outline"

@@ -45,13 +45,16 @@ function recolectarActividadDelDia(tareas: Tarea[], fecha: string): Record<strin
 
   for (const t of tareas) {
     const h = t.historial ?? [];
-    const dia: { de: number | null; a: number; e: EstadoTarea; f: number }[] = [];
+    const dia: { de: number; a: number; e: EstadoTarea; f: number }[] = [];
+    // i === 0 es la foto inicial de creación/importación de la tarea, no trabajo real —
+    // si se cuenta, toda tarea creada/importada hoy aparece como "trabajada" aunque nadie
+    // la haya tocado (ver bug real: proyectos importados con 60+ tareas inundando el informe).
     h.forEach((x, i) => {
-      if (x.f >= inicioMs && x.f <= finMs) dia.push({ de: i > 0 ? h[i - 1].p : null, a: x.p, e: x.e, f: x.f });
+      if (i > 0 && x.f >= inicioMs && x.f <= finMs) dia.push({ de: h[i - 1].p, a: x.p, e: x.e, f: x.f });
     });
     if (dia.length === 0) continue;
 
-    const inicio = dia[0].de === null ? 0 : dia[0].de;
+    const inicio = dia[0].de;
     const ultimo = dia[dia.length - 1];
     const resp = t.responsable || "Sin asignar";
     (mapa[resp] ??= []).push({
