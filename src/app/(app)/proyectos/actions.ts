@@ -1,12 +1,24 @@
 "use server";
 
+import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import { CATALOGO_TAREAS } from "@/content/catalogo-tareas";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
+import { inferirGrupoYSubgrupo, inferirPlantillaId } from "@/lib/importar";
 import { computeAvance } from "@/lib/tareas";
-import type { NotaIngenieria, Proyecto, Tarea, Usuario } from "@/types";
+import type {
+  Categoria,
+  EstadoProyecto,
+  EstadoTarea,
+  GrupoId,
+  NotaIngenieria,
+  Prioridad,
+  Proyecto,
+  Tarea,
+  Usuario,
+} from "@/types";
 
 interface DatosProyecto {
   nombre: string;
@@ -345,6 +357,147 @@ export async function agregarZona(proyectoId: string, nombre: string) {
   });
 
   revalidatePath(`/proyectos/${proyectoId}`);
+}
+
+const ESTADOS_PROYECTO: EstadoProyecto[] = ["Sin iniciar", "En progreso", "Revisión", "Entregado"];
+const ESTADOS_TAREA: EstadoTarea[] = ["Sin iniciar", "En progreso", "En revisión", "Completada", "Bloqueada"];
+const PRIORIDADES: Prioridad[] = ["Alta", "Media", "Baja"];
+
+function strOr(v: unknown, fallback = ""): string {
+  return typeof v === "string" ? v : fallback;
+}
+function numOr(v: unknown, fallback = 0): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+/**
+ * Acepta el formato v1 (proyecto con `tareas[]` plana) y el de `prompt-incidencias.md`, sin
+ * cambios. Regenera ids, infiere `grupo`/`subgrupo`/`plantillaId` cuando el archivo no los
+ * trae, y crea la subcolección real (nunca el array plano de la v1).
+ */
+export async function importarProyectoJSON(datos: unknown) {
+  const usuario = await exigirUsuario();
+  await exigirPermiso(usuario, "crearProyecto");
+
+  if (typeof datos !== "object" || datos === null) {
+    throw new Error("El archivo no tiene el formato esperado.");
+  }
+  const raw = datos as Record<string, unknown>;
+  if (typeof raw.nombre !== "string" || !Array.isArray(raw.tareas)) {
+    throw new Error("El archivo no tiene el formato de proyecto esperado.");
+  }
+
+  const [usuariosSnap, equipoSnap] = await Promise.all([
+    adminDb.collection("usuarios").get(),
+    adminDb.doc("config/equipo").get(),
+  ]);
+  const nombresConocidos = new Set([
+    ...usuariosSnap.docs.map((d) => (d.data() as Usuario).nombre),
+    ...((equipoSnap.data()?.membersLegacy as string[] | undefined) ?? []),
+  ]);
+
+  const ahora = Date.now();
+  const proyectoRef = adminDb.collection("proyectos").doc();
+  const batch = adminDb.batch();
+  const tareasCreadas: Tarea[] = [];
+
+  for (const item of raw.tareas) {
+    if (typeof item !== "object" || item === null) continue;
+    const t = item as Record<string, unknown>;
+
+    const nombre = strOr(t.nombre, "Tarea sin nombre");
+    const etapa = strOr(t.etapa, "");
+    const categoria = strOr(t.categoria, "Modelado") as Categoria;
+    const estado = ESTADOS_TAREA.includes(t.estado as EstadoTarea) ? (t.estado as EstadoTarea) : "Sin iniciar";
+    const prioridad = PRIORIDADES.includes(t.prioridad as Prioridad) ? (t.prioridad as Prioridad) : "Media";
+    const porcentaje = numOr(t.porcentaje, 0);
+
+    const plantillaId =
+      typeof t.plantillaId === "string" && t.plantillaId ? t.plantillaId : inferirPlantillaId(nombre);
+    const inferido = inferirGrupoYSubgrupo({ plantillaId, etapa, categoria });
+    const grupo = (typeof t.grupo === "string" && t.grupo ? (t.grupo as GrupoId) : inferido.grupo) ?? null;
+    const subgrupo = (typeof t.subgrupo === "string" && t.subgrupo ? t.subgrupo : inferido.subgrupo) ?? null;
+
+    const tareaRef = proyectoRef.collection("tareas").doc();
+    const tarea: Tarea = {
+      id: tareaRef.id,
+      proyectoId: proyectoRef.id,
+      plantillaId,
+      nombre,
+      categoria,
+      grupo,
+      subgrupo,
+      zona: strOr(t.zona, "") || null,
+      etapa: etapa || null,
+      responsableUid: typeof t.responsableUid === "string" ? t.responsableUid : null,
+      responsable: strOr(t.responsable, ""),
+      prioridad,
+      estado,
+      porcentaje,
+      fechaInicio: strOr(t.fechaInicio, ""),
+      fechaLimite: strOr(t.fechaLimite, ""),
+      fechaCompletada: strOr(t.fechaCompletada, ""),
+      horasEstimadas: numOr(t.horasEstimadas, 0),
+      horasReales: numOr(t.horasReales, 0),
+      comentarios: strOr(t.comentarios, ""),
+      bloqueadoPor: strOr(t.bloqueadoPor, ""),
+      verificacion:
+        typeof t.verificacion === "object" && t.verificacion !== null
+          ? (t.verificacion as Record<number, boolean>)
+          : {},
+      historial:
+        Array.isArray(t.historial) && t.historial.length > 0
+          ? (t.historial as Tarea["historial"])
+          : [{ f: ahora, p: porcentaje, e: estado }],
+      actualizado: ahora,
+    };
+
+    // Overrides de contenido: solo si vienen en el archivo (Firestore rechaza `undefined`).
+    if (typeof t.descripcion === "string") tarea.descripcion = t.descripcion;
+    if (typeof t.objetivo === "string") tarea.objetivo = t.objetivo;
+    if (Array.isArray(t.requisitos)) tarea.requisitos = t.requisitos as string[];
+    if (Array.isArray(t.procedimiento)) tarea.procedimiento = t.procedimiento as string[];
+    if (typeof t.resultadoEsperado === "string") tarea.resultadoEsperado = t.resultadoEsperado;
+    if (Array.isArray(t.criteriosVerificacion)) tarea.criteriosVerificacion = t.criteriosVerificacion as string[];
+    if (Array.isArray(t.notasIngenieria)) tarea.notasIngenieria = t.notasIngenieria as NotaIngenieria[];
+    if (Array.isArray(t.tipsRevit)) tarea.tipsRevit = t.tipsRevit as string[];
+
+    batch.set(tareaRef, tarea);
+    tareasCreadas.push(tarea);
+  }
+
+  const proyecto: Proyecto = {
+    id: proyectoRef.id,
+    nombre: raw.nombre,
+    cliente: strOr(raw.cliente, ""),
+    fechaInicio: strOr(raw.fechaInicio, ""),
+    fechaEntrega: strOr(raw.fechaEntrega, ""),
+    disciplina: strOr(raw.disciplina, "Eléctrica"),
+    software: strOr(raw.software, "Revit"),
+    estado: ESTADOS_PROYECTO.includes(raw.estado as EstadoProyecto) ? (raw.estado as EstadoProyecto) : "Sin iniciar",
+    notas: strOr(raw.notas, ""),
+    zonas: Array.isArray(raw.zonas) ? (raw.zonas as string[]) : [],
+    creado: ahora,
+    actualizado: ahora,
+    totalTareas: tareasCreadas.length,
+    tareasCompletadas: tareasCreadas.filter((t) => t.estado === "Completada").length,
+    avanceTotal: computeAvance(tareasCreadas),
+  };
+  batch.set(proyectoRef, proyecto);
+
+  // Incorporar responsables nuevos al equipo, igual que hacía la v1 al importar.
+  const nombresNuevos = [...new Set(tareasCreadas.map((t) => t.responsable).filter(Boolean))].filter(
+    (n) => !nombresConocidos.has(n),
+  );
+  if (nombresNuevos.length > 0) {
+    batch.set(adminDb.doc("config/equipo"), { membersLegacy: FieldValue.arrayUnion(...nombresNuevos) }, { merge: true });
+  }
+
+  await batch.commit();
+
+  revalidatePath("/proyectos");
+  return { id: proyectoRef.id };
 }
 
 // Quitar una zona NO borra sus tareas: quedan sin zona (igual que la v1).

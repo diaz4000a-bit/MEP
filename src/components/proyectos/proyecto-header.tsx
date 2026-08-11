@@ -6,10 +6,19 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { eliminarProyecto } from "@/app/(app)/proyectos/actions";
+import { InformeDialog } from "@/components/proyectos/informe-dialog";
 import { colorAvance, ESTILO_ESTADO_PROYECTO, fechaLegible } from "@/lib/tareas";
 import type { Proyecto } from "@/types";
 
-export function ProyectoHeader({ proyecto, puedeBorrar }: { proyecto: Proyecto; puedeBorrar: boolean }) {
+export function ProyectoHeader({
+  proyecto,
+  responsables,
+  puedeBorrar,
+}: {
+  proyecto: Proyecto;
+  responsables: string[];
+  puedeBorrar: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -41,11 +50,17 @@ export function ProyectoHeader({ proyecto, puedeBorrar }: { proyecto: Proyecto; 
             </Badge>
           </div>
         </div>
-        {puedeBorrar && (
-          <Button variant="destructive" size="sm" onClick={eliminar} disabled={pending}>
-            Eliminar proyecto
+        <div className="flex flex-wrap items-center gap-2">
+          <InformeDialog proyectoId={proyecto.id} responsables={responsables} />
+          <Button variant="outline" size="sm" render={<a href={`/api/proyectos/${proyecto.id}/exportar`} />}>
+            Exportar JSON
           </Button>
-        )}
+          {puedeBorrar && (
+            <Button variant="destructive" size="sm" onClick={eliminar} disabled={pending}>
+              Eliminar proyecto
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

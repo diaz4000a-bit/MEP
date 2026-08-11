@@ -38,10 +38,15 @@ export default async function ProyectoDetallePage({ params }: { params: Promise<
   const zonasProyecto = [
     ...new Set([...(proyecto.zonas ?? []), ...tareas.map((t) => t.zona).filter((z): z is string => !!z)]),
   ];
+  const responsablesConTareas = [...new Set(tareas.map((t) => t.responsable).filter(Boolean))].sort();
 
   return (
     <div className="flex flex-col gap-4">
-      <ProyectoHeader proyecto={proyecto} puedeBorrar={puede(usuario.rol, "borrarProyecto")} />
+      <ProyectoHeader
+        proyecto={proyecto}
+        responsables={responsablesConTareas}
+        puedeBorrar={puede(usuario.rol, "borrarProyecto")}
+      />
       <ZonasCard
         proyectoId={id}
         zonas={proyecto.zonas ?? []}

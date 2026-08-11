@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/sonner";
+import { PaletaBusqueda } from "@/components/busqueda/paleta-busqueda";
 import { BarraJornada } from "@/components/jornada/barra-jornada";
 import { icono } from "@/lib/icons";
+import type { ItemBusqueda } from "@/lib/busqueda";
 import type { Rol } from "@/types";
 import { NavContent } from "./nav-content";
 import { UserMenu } from "./user-menu";
@@ -17,15 +19,16 @@ interface ProyectoResumen {
 }
 
 const IconMenu = icono("ti-menu-2");
-const IconSearch = icono("ti-search");
 
 export function AppShell({
   usuario,
   proyectos,
+  indiceBusqueda,
   children,
 }: {
   usuario: { uid: string; nombre: string; rol: Rol };
   proyectos: ProyectoResumen[];
+  indiceBusqueda: ItemBusqueda[];
   children: React.ReactNode;
 }) {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
@@ -65,13 +68,7 @@ export function AppShell({
 
           <div className="flex-1" />
 
-          <Button variant="outline" size="sm" className="text-muted-foreground" disabled>
-            <IconSearch size={16} />
-            <span className="hidden sm:inline">Buscar…</span>
-            <kbd className="hidden rounded border border-border px-1 text-[10px] sm:inline">
-              Ctrl K
-            </kbd>
-          </Button>
+          <PaletaBusqueda items={indiceBusqueda} />
 
           <UserMenu nombre={usuario.nombre} rol={usuario.rol} />
         </header>

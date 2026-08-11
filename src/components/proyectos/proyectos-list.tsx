@@ -3,9 +3,9 @@
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase/client";
 import type { Proyecto } from "@/types";
+import { ImportarJsonBoton } from "./importar-json-boton";
 import { NuevoProyectoDialog } from "./nuevo-proyecto-dialog";
 import { ProyectoCard } from "./proyecto-card";
 
@@ -26,9 +26,7 @@ export function ProyectosList({ proyectosIniciales }: { proyectosIniciales: Proy
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-medium">Proyectos</h1>
         <div className="flex gap-2">
-          <Button variant="outline" disabled title="Pendiente (Paso 19)">
-            Importar JSON
-          </Button>
+          <ImportarJsonBoton />
           <NuevoProyectoDialog />
         </div>
       </div>
