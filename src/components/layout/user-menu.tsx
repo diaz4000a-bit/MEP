@@ -1,5 +1,6 @@
 "use client";
 
+import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { auth } from "@/lib/firebase/client";
 import type { Rol } from "@/types";
 
 const ETIQUETA_ROL: Record<Rol, string> = {
@@ -33,6 +35,7 @@ export function UserMenu({ nombre, rol }: { nombre: string; rol: Rol }) {
 
   const cerrarSesion = () => {
     startTransition(async () => {
+      await signOut(auth);
       await fetch("/api/session", { method: "DELETE" });
       router.push("/login");
       router.refresh();
