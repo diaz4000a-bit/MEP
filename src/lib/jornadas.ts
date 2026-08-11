@@ -14,7 +14,10 @@ export function formatearDuracion(minutos: number): string {
 }
 
 export function formatearHora(ms: number): string {
-  return new Date(ms).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+  // Sin `timeZone` explícito, `toLocaleTimeString` usa la zona del runtime que ejecuta el
+  // código — en el cliente es la del navegador (Colombia, correcto), pero en Server
+  // Components/API routes de Vercel es UTC, así que las horas salían 5h adelantadas.
+  return new Date(ms).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" });
 }
 
 export function esJornadaColgada(entrada: number): boolean {
