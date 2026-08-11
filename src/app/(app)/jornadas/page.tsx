@@ -7,7 +7,7 @@ import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
 import { diaSemanaDeFecha, horarioVacio, minutosProgramadosDia, rangoFechas } from "@/lib/horarios";
-import { esJornadaColgada, formatearDuracion, formatearHora } from "@/lib/jornadas";
+import { esJornadaColgada, fechaBogota, formatearDuracion, formatearHora } from "@/lib/jornadas";
 import type { HorarioSemanal, Jornada, Proyecto, Usuario } from "@/types";
 
 const ESTILO_ESTADO_CUMPLIMIENTO: Record<"Cumple" | "Parcial" | "No cumple" | "Libre", string> = {
@@ -24,12 +24,10 @@ const ESTILO_ESTADO_JORNADA: Record<Jornada["estado"], string> = {
 };
 
 function primerDiaDelMes(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  return `${fechaBogota().slice(0, 7)}-01`;
 }
 function hoy(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return fechaBogota();
 }
 
 export default async function JornadasPage({

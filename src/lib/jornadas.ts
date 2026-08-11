@@ -5,6 +5,20 @@ export function fechaLocalHoy(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// Igual que `fechaLocalHoy()` pero fija la zona (Bogotá) en vez de usar la del runtime —
+// para código que corre en el servidor (Server Components/API routes de Vercel, en UTC),
+// donde "hoy" debe seguir siendo el día calendario de Colombia, no el de UTC.
+export function fechaBogota(ms: number = Date.now()): string {
+  const partes = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(ms));
+  const valor = (tipo: string) => partes.find((p) => p.type === tipo)!.value;
+  return `${valor("year")}-${valor("month")}-${valor("day")}`;
+}
+
 export function formatearDuracion(minutos: number): string {
   const h = Math.floor(minutos / 60);
   const m = Math.round(minutos % 60);
