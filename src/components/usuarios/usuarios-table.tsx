@@ -1,8 +1,20 @@
 "use client";
 
-import { useTransition } from "react";
+import { Trash2 } from "lucide-react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -20,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Rol, Usuario } from "@/types";
-import { actualizarUsuario } from "@/app/(app)/usuarios/actions";
+import { actualizarUsuario, eliminarUsuario } from "@/app/(app)/usuarios/actions";
 
 const ROLES: Rol[] = ["admin", "coordinador", "ingeniero", "modelador", "usuario"];
 
@@ -31,6 +43,7 @@ function fechaLegible(ms: number) {
 
 export function UsuariosTable({ usuarios, uidActual }: { usuarios: Usuario[]; uidActual: string }) {
   const [pending, startTransition] = useTransition();
+  const [aEliminar, setAEliminar] = useState<Usuario | null>(null);
 
   const cambiarRol = (uid: string, rol: Rol) => {
     startTransition(async () => {
@@ -54,7 +67,22 @@ export function UsuariosTable({ usuarios, uidActual }: { usuarios: Usuario[]; ui
     });
   };
 
+  const confirmarEliminar = () => {
+    if (!aEliminar) return;
+    const uid = aEliminar.uid;
+    setAEliminar(null);
+    startTransition(async () => {
+      try {
+        await eliminarUsuario(uid);
+        toast.success("Usuario eliminado.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "No se pudo eliminar el usuario.");
+      }
+    });
+  };
+
   return (
+    <>
     <Table>
       <TableHeader>
         <TableRow>
@@ -63,6 +91,7 @@ export function UsuariosTable({ usuarios, uidActual }: { usuarios: Usuario[]; ui
           <TableHead>Rol</TableHead>
           <TableHead>Activo</TableHead>
           <TableHead>Último acceso</TableHead>
+          <TableHead className="w-0" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -105,10 +134,36 @@ export function UsuariosTable({ usuarios, uidActual }: { usuarios: Usuario[]; ui
                 />
               </TableCell>
               <TableCell className="text-muted-foreground">{fechaLegible(u.ultimoAcceso)}</TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={pending || esUno}
+                  onClick={() => setAEliminar(u)}
+                  aria-label={`Eliminar a ${u.nombre}`}
+                >
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              </TableCell>
             </TableRow>
           );
         })}
       </TableBody>
     </Table>
+    <AlertDialog open={aEliminar !== null} onOpenChange={(open) => !open && setAEliminar(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Eliminar a {aEliminar?.nombre}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta acción borra su cuenta y acceso de forma permanente. No se puede deshacer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmarEliminar}>Eliminar</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
