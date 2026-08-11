@@ -66,7 +66,11 @@ export function PersonaCard({
               {persona.tareas.map((t) => (
                 <TableRow key={t.id} className={estaVencida(t) ? "bg-estado-bloqueada/5" : undefined}>
                   <TableCell>
-                    <Link href={`/proyectos/${t.proyectoId}/tarea/${t.id}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/proyectos/${t.proyectoId}/tarea/${t.id}`}
+                      prefetch={false}
+                      className="font-medium hover:underline"
+                    >
                       {t.nombre}
                     </Link>
                   </TableCell>

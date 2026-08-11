@@ -146,7 +146,11 @@ function TablaTareas({ tareas, proyectosPorId }: { tareas: Tarea[]; proyectosPor
         {tareas.map((t) => (
           <TableRow key={t.id}>
             <TableCell>
-              <Link href={`/proyectos/${t.proyectoId}/tarea/${t.id}`} className="font-medium hover:underline">
+              <Link
+                href={`/proyectos/${t.proyectoId}/tarea/${t.id}`}
+                prefetch={false}
+                className="font-medium hover:underline"
+              >
                 {t.nombre}
               </Link>
             </TableCell>
