@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { formatearDuracion, formatearHora } from "@/lib/jornadas";
+import { fechaBogota } from "@/lib/tiempo";
 import type { Jornada } from "@/types";
 
 function csvEscape(valor: string): string {
@@ -28,7 +29,7 @@ export function ExportarCsvBoton({ jornadas }: { jornadas: Jornada[] }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `jornadas-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `jornadas-${fechaBogota()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

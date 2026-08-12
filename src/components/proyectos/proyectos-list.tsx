@@ -9,7 +9,13 @@ import { ImportarJsonBoton } from "./importar-json-boton";
 import { NuevoProyectoDialog } from "./nuevo-proyecto-dialog";
 import { ProyectoCard } from "./proyecto-card";
 
-export function ProyectosList({ proyectosIniciales }: { proyectosIniciales: Proyecto[] }) {
+export function ProyectosList({
+  proyectosIniciales,
+  puedeCrear,
+}: {
+  proyectosIniciales: Proyecto[];
+  puedeCrear: boolean;
+}) {
   const [proyectos, setProyectos] = useState(proyectosIniciales);
 
   useEffect(() => {
@@ -25,10 +31,12 @@ export function ProyectosList({ proyectosIniciales }: { proyectosIniciales: Proy
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-medium">Proyectos</h1>
-        <div className="flex gap-2">
-          <ImportarJsonBoton />
-          <NuevoProyectoDialog />
-        </div>
+        {puedeCrear && (
+          <div className="flex gap-2">
+            <ImportarJsonBoton />
+            <NuevoProyectoDialog />
+          </div>
+        )}
       </div>
 
       {proyectos.length === 0 ? (

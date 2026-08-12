@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cambiarProyectoJornada, registrarEntrada, registrarSalida } from "@/app/(app)/jornadas/actions";
 import { db } from "@/lib/firebase/client";
-import { esJornadaColgada, fechaLocalHoy, formatearDuracion, formatearHora } from "@/lib/jornadas";
+import { esJornadaColgada, formatearDuracion, formatearHora } from "@/lib/jornadas";
 import type { Jornada } from "@/types";
 
 // "YYYY-MM-DDTHH:mm" en hora local, valor por defecto de un <input type="datetime-local">
@@ -59,7 +59,7 @@ export function BarraJornada({ uid, proyectos }: { uid: string; proyectos: Proye
     if (!proyectoId) return toast.error("Selecciona un proyecto.");
     startTransition(async () => {
       try {
-        await registrarEntrada({ proyectoId, fecha: fechaLocalHoy() });
+        await registrarEntrada({ proyectoId });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "No se pudo registrar la entrada.");
       }
@@ -88,7 +88,7 @@ export function BarraJornada({ uid, proyectos }: { uid: string; proyectos: Proye
     if (!jornadaAbierta || !nuevoProyectoId || nuevoProyectoId === jornadaAbierta.proyectoId) return;
     startTransition(async () => {
       try {
-        await cambiarProyectoJornada({ proyectoId: nuevoProyectoId, fecha: fechaLocalHoy() });
+        await cambiarProyectoJornada({ proyectoId: nuevoProyectoId });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "No se pudo cambiar de proyecto.");
       }

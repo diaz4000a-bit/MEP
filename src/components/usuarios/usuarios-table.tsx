@@ -31,15 +31,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { fechaDeTimestamp } from "@/lib/tiempo";
 import type { Rol, Usuario } from "@/types";
 import { actualizarUsuario, eliminarUsuario } from "@/app/(app)/usuarios/actions";
 
 const ROLES: Rol[] = ["admin", "coordinador", "ingeniero", "modelador", "usuario"];
-
-function fechaLegible(ms: number) {
-  if (!ms) return "—";
-  return new Date(ms).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
-}
 
 export function UsuariosTable({ usuarios, uidActual }: { usuarios: Usuario[]; uidActual: string }) {
   const [pending, startTransition] = useTransition();
@@ -133,7 +129,7 @@ export function UsuariosTable({ usuarios, uidActual }: { usuarios: Usuario[]; ui
                   disabled={pending || esUno}
                 />
               </TableCell>
-              <TableCell className="text-muted-foreground">{fechaLegible(u.ultimoAcceso)}</TableCell>
+              <TableCell className="text-muted-foreground">{fechaDeTimestamp(u.ultimoAcceso)}</TableCell>
               <TableCell>
                 <Button
                   variant="ghost"

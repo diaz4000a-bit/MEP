@@ -21,6 +21,7 @@ import { GRUPOS } from "@/content/grupos";
 import { db } from "@/lib/firebase/client";
 import {
   colorAvance,
+  diasHasta,
   ESTILO_ESTADO,
   ESTILO_PRIORIDAD,
   estaProxima,
@@ -415,7 +416,7 @@ function FilaTarea({
 }) {
   const vencida = estaVencida(t);
   const proxima = estaProxima(t);
-  const d = t.fechaLimite ? Math.round((new Date(t.fechaLimite + "T00:00:00").getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000) : null;
+  const d = diasHasta(t.fechaLimite);
 
   return (
     <TableRow className={vencida ? "bg-estado-bloqueada/5" : proxima ? "bg-prioridad-media/5" : undefined}>

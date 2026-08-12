@@ -8,6 +8,7 @@ import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
 import { inferirGrupoYSubgrupo, inferirPlantillaId } from "@/lib/importar";
 import { computeAvance } from "@/lib/tareas";
+import { fechaBogota } from "@/lib/tiempo";
 import type {
   Categoria,
   EstadoProyecto,
@@ -187,7 +188,7 @@ export async function crearTarea(proyectoId: string, datos: DatosTarea) {
     proyectoId,
     plantillaId: null,
     ...datos,
-    fechaCompletada: datos.estado === "Completada" ? new Date().toISOString().slice(0, 10) : "",
+    fechaCompletada: datos.estado === "Completada" ? fechaBogota() : "",
     verificacion: {},
     historial: [{ f: ahora, p: datos.porcentaje, e: datos.estado }],
     actualizado: ahora,
@@ -227,7 +228,7 @@ export async function actualizarTarea(proyectoId: string, tareaId: string, datos
       ...datos,
       fechaCompletada:
         datos.estado === "Completada"
-          ? actual.fechaCompletada || new Date().toISOString().slice(0, 10)
+          ? actual.fechaCompletada || fechaBogota()
           : "",
       historial,
       actualizado: ahora,
@@ -283,7 +284,7 @@ export async function actualizarEstadoTarea(
       estado,
       porcentaje,
       fechaCompletada:
-        estado === "Completada" ? actual.fechaCompletada || new Date().toISOString().slice(0, 10) : "",
+        estado === "Completada" ? actual.fechaCompletada || fechaBogota() : "",
       historial,
       actualizado: ahora,
     };

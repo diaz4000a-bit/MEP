@@ -10,29 +10,43 @@ service cloud.firestore {
     function esAdmin()  { return activo() && rol() == 'admin'; }
     function esGestor() { return activo() && rol() in ['admin', 'coordinador']; }
 
+    // Principio de estas reglas: el cliente SOLO lee. La única escritura que hace la app
+    // desde el navegador es el alta de la propia cuenta en /login. Todo lo demás (jornadas,
+    // tareas, proyectos, horarios, config) se escribe desde Server Actions con el Admin SDK,
+    // que no pasa por reglas y que es donde viven las transacciones, el recálculo de avance
+    // y la matriz de permisos. Conceder aquí escrituras que la app no usa solo abre camino
+    // a saltarse esa lógica desde la consola del navegador.
+
     match /usuarios/{uid} {
-      allow read:   if activo();
+      // El propio doc se lee siempre, incluso con activo == false: si no, la cuenta
+      // pendiente de aprobación recibe permission-denied y el login lo reporta como
+      // "correo o contraseña incorrectos".
+      allow get:    if auth0() && (yo() == uid || esGestor());
+      // Nadie lista el directorio desde el cliente; /usuarios se sirve con el Admin SDK.
+      allow list:   if esAdmin();
       allow create: if auth0() && yo() == uid
-                    && request.resource.data.rol == 'usuario'    // nadie se autoasciende
-                    && request.resource.data.activo == false;    // un admin lo activa
+                    && request.resource.data.uid == uid              // el campo debe ser el propio
+                    && request.resource.data.rol == 'usuario'        // nadie se autoasciende
+                    && request.resource.data.activo == false;        // un admin lo activa
+      // `uid` va congelado junto a `rol` y `activo`: el servidor lo usa como identidad en
+      // toda la autorización por-recurso (dueño de jornada, responsable de tarea, horario).
       allow update: if esAdmin()
                     || (activo() && yo() == uid
+                        && request.resource.data.uid == resource.data.uid
                         && request.resource.data.rol == resource.data.rol
                         && request.resource.data.activo == resource.data.activo);
       allow delete: if esAdmin();
     }
 
     match /proyectos/{pid} {
-      allow read:           if activo();
-      allow create, delete: if esGestor();
-      allow update:         if esGestor();
+      allow read:  if activo();
+      allow write: if false;   // solo Server Actions (eliminarProyecto borra las tareas en batch)
 
       match /tareas/{tid} {
-        allow read:           if activo();
-        allow create, delete: if esGestor();
-        // ← esto es lo que la v1 NO podía expresar:
-        allow update: if esGestor()
-                      || (activo() && resource.data.responsableUid == yo());
+        allow read:  if activo();
+        // Escribir aquí desde el cliente saltaría el recálculo de totalTareas/avanceTotal
+        // del proyecto padre y el registro en historial que hacen las Server Actions.
+        allow write: if false;
       }
     }
 
@@ -40,23 +54,24 @@ service cloud.firestore {
       // `list` separado de `get`: Firestore no puede probar que una query cumple una regla
       // con OR + get() ajeno al resource, así que la consulta en vivo del cliente (¿tengo
       // una jornada abierta?) solo puede pedir las suyas. Los reportes de equipo (gestor
-      // viendo jornadas ajenas) se sirven desde el servidor con el Admin SDK, que no pasa
-      // por reglas.
-      allow get:    if activo() && (resource.data.uid == yo() || esGestor());
-      allow list:   if activo() && request.auth.uid == resource.data.uid;
-      allow create: if activo() && request.resource.data.uid == yo();
-      allow update: if activo() && (resource.data.uid == yo() || esGestor());
-      allow delete: if esAdmin();
+      // viendo jornadas ajenas) se sirven desde el servidor con el Admin SDK.
+      allow get:   if activo() && (resource.data.uid == yo() || esGestor());
+      allow list:  if activo() && request.auth.uid == resource.data.uid;
+      // Las horas son el insumo de nómina: solo las escribe el servidor, que valida
+      // solapamiento, estado y calcula duracionMin a partir de la entrada real.
+      allow write: if false;
     }
 
     match /config/{doc} {
       allow read:  if activo();
-      allow write: if esGestor();
+      allow write: if false;
     }
 
     match /horarios/{uid} {
       allow read:  if activo() && (yo() == uid || esGestor());
-      allow write: if activo() && (yo() == uid || esGestor());
+      // El horario es la línea base contra la que se mide el cumplimiento; lo escribe
+      // guardarHorario (Server Action), que además valida la forma del documento.
+      allow write: if false;
     }
   }
 }

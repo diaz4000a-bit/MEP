@@ -12,6 +12,18 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Vuelve a iniciar sesión' }, { status: 401 });
   }
 
+  // La cuenta debe existir y estar aprobada ANTES de emitir la cookie. El corte que
+  // había en el formulario de login es solo de UI: cualquiera puede pedir un idToken
+  // a la API pública de Firebase Auth y llamar a este endpoint directamente.
+  const ref = adminDb.doc(`usuarios/${decoded.uid}`);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    return Response.json({ error: 'Tu cuenta no está registrada.' }, { status: 403 });
+  }
+  if (snap.data()?.activo !== true) {
+    return Response.json({ error: 'Tu cuenta espera aprobación.' }, { status: 403 });
+  }
+
   const cookieSesion = await adminAuth.createSessionCookie(idToken, { expiresIn: DURACION_MS });
   const jar = await cookies();
   jar.set('sesion', cookieSesion, {
@@ -22,7 +34,12 @@ export async function POST(request: Request) {
     maxAge: DURACION_MS / 1000,
   });
 
-  await adminDb.doc(`usuarios/${decoded.uid}`).update({ ultimoAcceso: Date.now() });
+  // Registrar el acceso no debe poder tumbar un login ya válido.
+  try {
+    await ref.update({ ultimoAcceso: Date.now() });
+  } catch {
+    // sin efecto para el usuario: la sesión ya está creada
+  }
 
   return Response.json({ ok: true });
 }

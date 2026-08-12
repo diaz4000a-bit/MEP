@@ -1,7 +1,9 @@
+import { puede } from "@/lib/auth/roles";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { adminDb } from "@/lib/firebase/admin";
 import { formatearDuracion, formatearHora } from "@/lib/jornadas";
 import { computeAvance } from "@/lib/tareas";
+import { ZONA, fechaBogota, fechaLarga, ventanaDelDia } from "@/lib/tiempo";
 import type { EstadoTarea, Jornada, Proyecto, Tarea } from "@/types";
 
 // Colores del tema oscuro de la app (globals.css) — el informe es un documento
@@ -39,8 +41,11 @@ interface FilaActividad {
 // Reúne, por responsable, las tareas con actividad (avance/estado) en una fecha dada.
 // Para cada tarea con varios registros ese día se reporta el movimiento neto del día.
 function recolectarActividadDelDia(tareas: Tarea[], fecha: string): Record<string, FilaActividad[]> {
-  const inicioMs = new Date(fecha + "T00:00:00").getTime();
-  const finMs = new Date(fecha + "T23:59:59.999").getTime();
+  // La ventana es el día de Bogotá, no el del runtime: en Vercel (UTC) recortaba de las
+  // 19:00 del día anterior a las 18:59 del día pedido, así que el turno de tarde caía en
+  // el informe del día siguiente mientras las jornadas (filtradas por el string `fecha`)
+  // sí usaban el día real.
+  const { inicioMs, finMs } = ventanaDelDia(fecha);
   const mapa: Record<string, FilaActividad[]> = {};
 
   for (const t of tareas) {
@@ -85,13 +90,9 @@ function construirInformeHTML(
   let responsables = Object.keys(actividad).sort();
   if (respFiltro) responsables = responsables.filter((r) => r === respFiltro);
 
-  const fechaLarga = new Date(fecha + "T00:00:00").toLocaleDateString("es-CO", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const fechaLargaTxt = fechaLarga(fecha);
   const generado = new Date().toLocaleString("es-CO", {
+    timeZone: ZONA,
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -208,7 +209,7 @@ function construirInformeHTML(
     `<div class="report-head">` +
     `<h1>Informe de progreso diario</h1>` +
     `<div class="proj">${esc(proyecto.nombre)}${proyecto.cliente ? " · " + esc(proyecto.cliente) : ""}</div>` +
-    `<div class="meta">${esc(fechaLarga)}${respFiltro ? " · Trabajador: " + esc(respFiltro) : " · Todos los trabajadores"}</div>` +
+    `<div class="meta">${esc(fechaLargaTxt)}${respFiltro ? " · Trabajador: " + esc(respFiltro) : " · Todos los trabajadores"}</div>` +
     `</div>` +
     `<div class="summary">` +
     `<div class="chip">Avance del proyecto<b>${computeAvance(tareas)}%</b></div>` +
@@ -226,10 +227,10 @@ function construirInformeHTML(
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await exigirUsuario();
+  const usuario = await exigirUsuario();
 
   const { searchParams } = new URL(request.url);
-  const fecha = searchParams.get("fecha") || new Date().toISOString().slice(0, 10);
+  const fecha = searchParams.get("fecha") || fechaBogota();
   const respFiltro = searchParams.get("resp") || "";
 
   const proyectoRef = adminDb.doc(`proyectos/${id}`);
@@ -245,7 +246,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const proyecto = proyectoSnap.data() as Proyecto;
   const tareas = tareasSnap.docs.map((d) => d.data() as Tarea);
-  const jornadas = jornadasSnap.docs.map((d) => d.data() as Jornada);
+  // Las jornadas del equipo son dato reservado a gestores (misma regla que /jornadas):
+  // quien no pueda verlas recibe el informe con su propia jornada únicamente.
+  const todasLasJornadas = jornadasSnap.docs.map((d) => d.data() as Jornada);
+  const jornadas = puede(usuario.rol, "verJornadasAjenas")
+    ? todasLasJornadas
+    : todasLasJornadas.filter((j) => j.uid === usuario.uid);
 
   const jornadasPorResp = new Map<string, Jornada[]>();
   for (const j of jornadas) {

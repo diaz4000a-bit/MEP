@@ -35,10 +35,21 @@ export default function LoginPage() {
   );
 }
 
+/** Acepta solo rutas relativas del propio sitio: "/x". Rechaza "//host", "https://host" y "\\host". */
+function rutaInternaSegura(valor: string | null): string | null {
+  if (!valor) return null;
+  if (!valor.startsWith("/")) return null;
+  if (valor.startsWith("//") || valor.startsWith("/\\")) return null;
+  return valor;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const volver = searchParams.get("volver");
+  // Solo se acepta una ruta interna. Sin esta comprobación, ?volver=https://... convierte
+  // el login legítimo en el primer paso de un phishing: la víctima se autentica en el
+  // dominio real y acaba en el clon del atacante.
+  const volver = rutaInternaSegura(searchParams.get("volver"));
 
   const [modo, setModo] = useState<Modo>("login");
   const [email, setEmail] = useState("");

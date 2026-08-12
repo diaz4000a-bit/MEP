@@ -12,7 +12,7 @@ import {
   tareasUrgentes,
 } from "@/lib/dashboard";
 import { adminDb } from "@/lib/firebase/admin";
-import { fechaLocalHoy } from "@/lib/jornadas";
+import { fechaBogota } from "@/lib/jornadas";
 import type { EstadoTarea, Jornada, Proyecto, Tarea } from "@/types";
 
 const ESTADOS: EstadoTarea[] = ["Sin iniciar", "En progreso", "En revisión", "Completada", "Bloqueada"];
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
   const jornadasPropias = jornadas.filter((j) => j.uid === usuario.uid).sort((a, b) => b.entrada - a.entrada);
   const proyectoActual = jornadaAbierta?.proyectoNombre ?? jornadasPropias[0]?.proyectoNombre ?? null;
 
-  const hoy = fechaLocalHoy();
+  const hoy = fechaBogota();
   const minutosHoy = minutosTrabajadosHoy(jornadasPropias, jornadaAbierta, hoy);
 
   const tareasPropias = tareas.filter((t) => t.responsableUid === usuario.uid);

@@ -1,22 +1,12 @@
-// Fecha local (YYYY-MM-DD) del navegador — nunca UTC, para que la jornada quede
-// registrada en el día calendario real del usuario, igual que `todayStr()` en la v1.
-export function fechaLocalHoy(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { ZONA, fechaBogota } from "@/lib/tiempo";
 
-// Igual que `fechaLocalHoy()` pero fija la zona (Bogotá) en vez de usar la del runtime —
-// para código que corre en el servidor (Server Components/API routes de Vercel, en UTC),
-// donde "hoy" debe seguir siendo el día calendario de Colombia, no el de UTC.
-export function fechaBogota(ms: number = Date.now()): string {
-  const partes = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Bogota",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date(ms));
-  const valor = (tipo: string) => partes.find((p) => p.type === tipo)!.value;
-  return `${valor("year")}-${valor("month")}-${valor("day")}`;
+export { fechaBogota };
+
+// `fechaLocalHoy` usaba la zona del runtime, así que devolvía el día UTC en el servidor.
+// Se mantiene el nombre por los llamadores existentes, pero ahora siempre es día de Bogotá
+// tanto en el navegador como en Vercel.
+export function fechaLocalHoy(): string {
+  return fechaBogota();
 }
 
 export function formatearDuracion(minutos: number): string {
@@ -31,7 +21,7 @@ export function formatearHora(ms: number): string {
   // Sin `timeZone` explícito, `toLocaleTimeString` usa la zona del runtime que ejecuta el
   // código — en el cliente es la del navegador (Colombia, correcto), pero en Server
   // Components/API routes de Vercel es UTC, así que las horas salían 5h adelantadas.
-  return new Date(ms).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: "America/Bogota" });
+  return new Date(ms).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", timeZone: ZONA });
 }
 
 export function esJornadaColgada(entrada: number): boolean {

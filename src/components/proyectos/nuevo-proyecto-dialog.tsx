@@ -16,9 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { fechaBogota } from "@/lib/tiempo";
 import { crearProyecto, crearProyectoDesdeplantilla } from "@/app/(app)/proyectos/actions";
-
-const HOY = new Date().toISOString().slice(0, 10);
 
 export function NuevoProyectoDialog() {
   const router = useRouter();
@@ -27,7 +26,9 @@ export function NuevoProyectoDialog() {
   const [pending, startTransition] = useTransition();
   const [nombre, setNombre] = useState("");
   const [cliente, setCliente] = useState("");
-  const [fechaInicio, setFechaInicio] = useState(HOY);
+  // Se calcula al montar y no a nivel de módulo: si no, una pestaña abierta desde ayer
+  // seguiría proponiendo la fecha de ayer.
+  const [fechaInicio, setFechaInicio] = useState(fechaBogota);
   const [fechaEntrega, setFechaEntrega] = useState("");
   const [software, setSoftware] = useState("Revit");
 

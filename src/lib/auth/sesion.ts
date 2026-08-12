@@ -11,7 +11,11 @@ export async function usuarioActual(): Promise<Usuario | null> {
   try {
     const decoded = await adminAuth.verifySessionCookie(cookie, true);
     const snap = await adminDb.doc(`usuarios/${decoded.uid}`).get();
-    return snap.exists ? (snap.data() as Usuario) : null;
+    if (!snap.exists) return null;
+    // El `uid` SIEMPRE sale del token verificado, nunca del documento: el campo `uid`
+    // del doc es escribible por el propio usuario y decide toda la autorización
+    // por-recurso (dueño de jornada, responsable de tarea, horario propio).
+    return { ...(snap.data() as Usuario), uid: decoded.uid };
   } catch {
     return null;
   }

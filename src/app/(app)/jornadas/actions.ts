@@ -4,13 +4,13 @@ import { revalidatePath } from "next/cache";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
+import { fechaBogota } from "@/lib/tiempo";
 import type { Jornada } from "@/types";
 
 export async function registrarEntrada(input: {
   proyectoId: string;
   tareaId?: string;
   notas?: string;
-  fecha: string; // YYYY-MM-DD local del navegador — ver src/lib/jornadas.ts
 }) {
   const usuario = await exigirUsuario();
 
@@ -40,7 +40,10 @@ export async function registrarEntrada(input: {
       usuarioNombre: usuario.nombre,
       proyectoId: input.proyectoId,
       proyectoNombre,
-      fecha: input.fecha,
+      // Derivada del reloj del servidor, no del cliente: `fecha` es la clave por la que
+      // /jornadas y el informe agrupan las horas, así que si el navegador la elige puede
+      // colocar la jornada en cualquier día (post-datar, esquivar un cierre de periodo).
+      fecha: fechaBogota(ahora),
       entrada: ahora,
       salida: null,
       duracionMin: null,
@@ -57,7 +60,7 @@ export async function registrarEntrada(input: {
   revalidatePath("/", "layout");
 }
 
-export async function cambiarProyectoJornada(input: { proyectoId: string; fecha: string }) {
+export async function cambiarProyectoJornada(input: { proyectoId: string }) {
   const usuario = await exigirUsuario();
 
   const proyectoSnap = await adminDb.doc(`proyectos/${input.proyectoId}`).get();
@@ -85,7 +88,7 @@ export async function cambiarProyectoJornada(input: { proyectoId: string; fecha:
       usuarioNombre: usuario.nombre,
       proyectoId: input.proyectoId,
       proyectoNombre,
-      fecha: input.fecha,
+      fecha: fechaBogota(ahora),
       entrada: ahora,
       salida: null,
       duracionMin: null,
@@ -120,7 +123,14 @@ export async function registrarSalida(input: { jornadaId: string; horaSalida?: n
   if (jornada.estado !== "abierta") throw new Error("Esta jornada ya está cerrada.");
 
   const salida = input.horaSalida ?? Date.now();
+  if (!Number.isFinite(salida)) throw new Error("La hora de salida no es válida.");
   if (salida < jornada.entrada) throw new Error("La hora de salida no puede ser anterior a la de entrada.");
+  // Tope superior: `horaSalida` viene de un input del navegador y `duracionMin` se calcula
+  // a partir de ella, así que un año mal tecleado se convertía en miles de horas en los
+  // totales de nómina. El margen absorbe desfases de reloj entre cliente y servidor.
+  if (salida > Date.now() + 2 * 60 * 1000) {
+    throw new Error("La hora de salida no puede estar en el futuro.");
+  }
 
   const duracionMin = Math.round((salida - jornada.entrada) / 60000);
   await ref.update({
