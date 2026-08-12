@@ -6,7 +6,9 @@ import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import type { Rol } from "@/types";
 
 export async function actualizarUsuario(uid: string, cambios: { rol?: Rol; activo?: boolean }) {
-  await exigirRol("admin");
+  const admin = await exigirRol("admin");
+  if (uid === admin.uid) throw new Error("No puedes cambiar tu propio rol o estado.");
+
   await adminDb.doc(`usuarios/${uid}`).update(cambios);
   revalidatePath("/usuarios");
 }
