@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tooling de terceros (plugin ECC), no es codigo del proyecto.
+    ".claude/**",
   ]),
 ]);
 

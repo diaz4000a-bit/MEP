@@ -10,6 +10,8 @@
     "build": "npm run validar && next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "validar": "tsx scripts/validar-contenido.ts"
   },
   "dependencies": {
@@ -42,7 +44,8 @@
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "jose": "^5.10.0"
