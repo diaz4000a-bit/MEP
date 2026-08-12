@@ -3,6 +3,8 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import { CATALOGO_TAREAS } from "@/content/catalogo-tareas";
+import { CATEGORIAS } from "@/content/categorias";
+import { GRUPOS } from "@/content/grupos";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
@@ -222,17 +224,25 @@ export async function actualizarTarea(proyectoId: string, tareaId: string, datos
     const historial = huboCambio
       ? [...actual.historial, { f: ahora, p: datos.porcentaje, e: datos.estado }].slice(-60)
       : actual.historial;
+    const fechaCompletada = datos.estado === "Completada" ? actual.fechaCompletada || fechaBogota() : "";
 
-    const actualizada: Tarea = {
-      ...actual,
-      ...datos,
-      fechaCompletada:
-        datos.estado === "Completada"
-          ? actual.fechaCompletada || fechaBogota()
-          : "",
-      historial,
-      actualizado: ahora,
-    };
+    // Sin editarTareaAjena solo se puede tocar el progreso de la propia tarea: reasignar,
+    // repriorizar, mover fechas o cambiar horas estimadas es gestión de proyecto, reservada
+    // a quien tiene editarTareaAjena. TareaDialog ya deshabilita esos campos en ese caso;
+    // esto es lo que realmente lo impide si alguien llama la action directo.
+    const actualizada: Tarea = puedeAjena
+      ? { ...actual, ...datos, fechaCompletada, historial, actualizado: ahora }
+      : {
+          ...actual,
+          estado: datos.estado,
+          porcentaje: datos.porcentaje,
+          horasReales: datos.horasReales,
+          comentarios: datos.comentarios,
+          bloqueadoPor: datos.bloqueadoPor,
+          fechaCompletada,
+          historial,
+          actualizado: ahora,
+        };
 
     const otras = todasSnap.docs.filter((d) => d.id !== tareaId).map((d) => d.data() as Tarea);
     const todas = [...otras, actualizada];
@@ -409,7 +419,7 @@ export async function importarProyectoJSON(datos: unknown) {
 
     const nombre = strOr(t.nombre, "Tarea sin nombre");
     const etapa = strOr(t.etapa, "");
-    const categoria = strOr(t.categoria, "Modelado") as Categoria;
+    const categoria = CATEGORIAS.includes(t.categoria as Categoria) ? (t.categoria as Categoria) : "Modelado";
     const estado = ESTADOS_TAREA.includes(t.estado as EstadoTarea) ? (t.estado as EstadoTarea) : "Sin iniciar";
     const prioridad = PRIORIDADES.includes(t.prioridad as Prioridad) ? (t.prioridad as Prioridad) : "Media";
     const porcentaje = numOr(t.porcentaje, 0);
@@ -417,7 +427,12 @@ export async function importarProyectoJSON(datos: unknown) {
     const plantillaId =
       typeof t.plantillaId === "string" && t.plantillaId ? t.plantillaId : inferirPlantillaId(nombre);
     const inferido = inferirGrupoYSubgrupo({ plantillaId, etapa, categoria });
-    const grupo = (typeof t.grupo === "string" && t.grupo ? (t.grupo as GrupoId) : inferido.grupo) ?? null;
+    // `grupo` debe ser uno de los 8 grupos reales: un valor ajeno (typo, campo legacy de la v1)
+    // desaparecía en silencio de la vista "Agrupar por grupo" aunque la tarea siguiera contando
+    // en el total del encabezado.
+    const grupoImportado =
+      typeof t.grupo === "string" && GRUPOS.some((g) => g.id === t.grupo) ? (t.grupo as GrupoId) : null;
+    const grupo = grupoImportado ?? inferido.grupo ?? null;
     const subgrupo = (typeof t.subgrupo === "string" && t.subgrupo ? t.subgrupo : inferido.subgrupo) ?? null;
 
     const tareaRef = proyectoRef.collection("tareas").doc();

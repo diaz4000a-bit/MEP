@@ -51,13 +51,13 @@ export function InformeDialog({ proyectoId, responsables }: { proyectoId: string
             <Input id="inf-fecha" type="date" value={fecha} max={hoy()} onChange={(e) => setFecha(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Trabajador</Label>
+            <Label htmlFor="inf-resp">Trabajador</Label>
             <Select
               value={resp || TODOS}
               items={{ [TODOS]: "Todos los trabajadores", ...Object.fromEntries(responsables.map((r) => [r, r])) }}
               onValueChange={(v) => setResp(!v || v === TODOS ? "" : v)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="inf-resp" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

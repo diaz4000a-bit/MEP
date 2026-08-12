@@ -17,7 +17,14 @@ export default async function ZonaDetallePage({
   const { id, zona: zonaParam } = await params;
   const usuario = await exigirUsuario();
   const esSinZona = zonaParam === SIN_ZONA_SLUG;
-  const zonaNombre = esSinZona ? null : decodeURIComponent(zonaParam);
+  // Un `%` suelto o un escape inválido en la URL (typeo, enlace a mano) hace que
+  // decodeURIComponent lance URIError; se trata igual que una zona que no existe.
+  let zonaNombre: string | null;
+  try {
+    zonaNombre = esSinZona ? null : decodeURIComponent(zonaParam);
+  } catch {
+    redirect(`/proyectos/${id}`);
+  }
 
   const proyectoRef = adminDb.doc(`proyectos/${id}`);
   const [proyectoSnap, tareasSnap, usuariosSnap, equipoSnap] = await Promise.all([

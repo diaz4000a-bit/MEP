@@ -1,6 +1,7 @@
 import { Actividad } from "@/components/dashboard/actividad";
 import { Indicadores } from "@/components/dashboard/indicadores";
 import { MiEstado } from "@/components/dashboard/mi-estado";
+import { puede } from "@/lib/auth/roles";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import {
   actividadReciente,
@@ -42,6 +43,11 @@ export default async function DashboardPage() {
   const jornadasPropias = jornadas.filter((j) => j.uid === usuario.uid).sort((a, b) => b.entrada - a.entrada);
   const proyectoActual = jornadaAbierta?.proyectoNombre ?? jornadasPropias[0]?.proyectoNombre ?? null;
 
+  // Las jornadas ajenas son dato reservado a gestores (misma regla que /jornadas y el
+  // informe diario): sin este filtro, cualquier rol veía nombre + hora de entrada/salida
+  // de todo el equipo en "Actividad reciente" y las horas por proyecto.
+  const jornadasVisibles = puede(usuario.rol, "verJornadasAjenas") ? jornadas : jornadasPropias;
+
   const hoy = fechaBogota();
   const minutosHoy = minutosTrabajadosHoy(jornadasPropias, jornadaAbierta, hoy);
 
@@ -61,7 +67,7 @@ export default async function DashboardPage() {
   const porEstado = ESTADOS.map((estado) => ({ estado, n: tareas.filter((t) => t.estado === estado).length }));
 
   // Banda 3 — Actividad y alertas
-  const eventos = actividadReciente(tareas, proyectosPorId, jornadas);
+  const eventos = actividadReciente(tareas, proyectosPorId, jornadasVisibles);
   const { vencidas, proximas } = tareasUrgentes(tareas, proyectosPorId);
   const zonas = avancePorZona(tareas, proyectosPorId);
 
@@ -84,7 +90,7 @@ export default async function DashboardPage() {
 
       <Indicadores
         proyectos={proyectos}
-        horas={horasPorProyecto(jornadas)}
+        horas={horasPorProyecto(jornadasVisibles)}
         totalTareas={tareas.length}
         completadas={completadas}
         promedioHorasReales={promedioHorasReales}

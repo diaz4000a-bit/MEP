@@ -4,7 +4,16 @@ import { adminAuth, adminDb } from '@/lib/firebase/admin';
 const DURACION_MS = 60 * 60 * 24 * 5 * 1000; // 5 días
 
 export async function POST(request: Request) {
-  const { idToken } = await request.json();
+  let idToken: unknown;
+  try {
+    ({ idToken } = await request.json());
+  } catch {
+    return Response.json({ error: 'Solicitud inválida.' }, { status: 400 });
+  }
+  if (typeof idToken !== 'string' || !idToken) {
+    return Response.json({ error: 'Solicitud inválida.' }, { status: 400 });
+  }
+
   const decoded = await adminAuth.verifyIdToken(idToken);
 
   // Solo se acepta un token recién emitido (< 5 min): evita reutilizar tokens viejos

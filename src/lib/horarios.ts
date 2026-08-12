@@ -38,6 +38,38 @@ export function minutosProgramadosSemana(dias: HorarioSemanal["dias"]): number {
   return DIAS_SEMANA.reduce((s, d) => s + minutosProgramadosDia(dias[d.key]), 0);
 }
 
+const HORA_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function bloqueValido(v: unknown): boolean {
+  if (v === null) return true;
+  if (typeof v !== "object") return false;
+  const b = v as Record<string, unknown>;
+  return typeof b.inicio === "string" && HORA_RE.test(b.inicio) && typeof b.fin === "string" && HORA_RE.test(b.fin);
+}
+
+/**
+ * Valida la forma de `dias` (los 6 días de la semana, cada bloque `null` o `{ inicio, fin }`
+ * en `HH:mm`) antes de guardarlo o de confiar en un documento leído de Firestore. `guardarHorario`
+ * recibe el payload tal cual lo manda el cliente; sin esto, un `inicio`/`fin` que no sea
+ * "HH:mm" pasa intacto a `minutosBloque`, que revienta con un `TypeError` al hacer `.split(":")`.
+ */
+export function validarDias(valor: unknown): HorarioSemanal["dias"] | null {
+  if (typeof valor !== "object" || valor === null) return null;
+  const v = valor as Record<string, unknown>;
+  const dias = {} as HorarioSemanal["dias"];
+  for (const { key } of DIAS_SEMANA) {
+    const dia = v[key];
+    if (typeof dia !== "object" || dia === null) return null;
+    const d = dia as Record<string, unknown>;
+    if (!bloqueValido(d.manana) || !bloqueValido(d.tarde)) return null;
+    dias[key] = {
+      manana: (d.manana ?? null) as BloqueHorario | null,
+      tarde: (d.tarde ?? null) as BloqueHorario | null,
+    };
+  }
+  return dias;
+}
+
 /** Fechas 'YYYY-MM-DD' entre desde y hasta, ambas incluidas. */
 export function rangoFechas(desde: string, hasta: string): string[] {
   const out: string[] = [];

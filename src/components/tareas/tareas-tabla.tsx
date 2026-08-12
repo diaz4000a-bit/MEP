@@ -257,6 +257,7 @@ export function TareasTabla({
         zonasDisponibles={zonasDisponibles}
         etapasDisponibles={etapasDisponibles}
         responsablesDisponibles={responsablesDisponibles}
+        puedeEditarAjena={puedeEditarAjenas}
       />
     </div>
   );
@@ -467,12 +468,19 @@ function FilaTarea({
       <TableCell className="text-right">
         <div className="flex justify-end gap-1">
           {puedeEditar && (
-            <Button variant="ghost" size="icon-sm" onClick={() => onEditar(t)} title="Editar">
+            <Button variant="ghost" size="icon-sm" onClick={() => onEditar(t)} aria-label="Editar tarea" title="Editar">
               ✎
             </Button>
           )}
           {puedeEliminar && (
-            <Button variant="ghost" size="icon-sm" onClick={() => onEliminar(t)} title="Eliminar" className="text-estado-bloqueada">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => onEliminar(t)}
+              aria-label="Eliminar tarea"
+              title="Eliminar"
+              className="text-estado-bloqueada"
+            >
               ✕
             </Button>
           )}

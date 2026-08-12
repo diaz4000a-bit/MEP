@@ -4,7 +4,7 @@ import { IconChevronRight } from "@tabler/icons-react";
 import { doc, onSnapshot } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState, useTransition } from "react";
+import { type ReactNode, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -58,6 +58,7 @@ export function FichaTarea({
   etapasDisponibles,
   responsablesDisponibles,
   puedeEditar,
+  puedeEditarAjena,
   puedeEliminar,
 }: {
   proyecto: { id: string; nombre: string };
@@ -71,29 +72,45 @@ export function FichaTarea({
   etapasDisponibles: string[];
   responsablesDisponibles: Responsable[];
   puedeEditar: boolean;
+  puedeEditarAjena: boolean;
   puedeEliminar: boolean;
 }) {
   const router = useRouter();
   const [tarea, setTarea] = useState(tareaInicial);
   const [dialogAbierto, setDialogAbierto] = useState(false);
+  const [dialogGen, setDialogGen] = useState(0);
   const [pending, startTransition] = useTransition();
 
   const [estado, setEstado] = useState<EstadoTarea>(tareaInicial.estado);
   const [porcentaje, setPorcentaje] = useState(tareaInicial.porcentaje);
   const [confirmCompletar, setConfirmCompletar] = useState(false);
 
+  const criteriosSinMarcar = contenido.criteriosVerificacion.filter((_, i) => !tarea.verificacion?.[i]).length;
+  const hayCambiosEstado = estado !== tarea.estado || porcentaje !== tarea.porcentaje;
+
+  // Un evento remoto (otro usuario, o incluso nuestro propio toggleCriterio) no debe pisar
+  // un cambio de estado/porcentaje que el usuario todavía no ha guardado con "Guardar estado".
+  const hayCambiosRef = useRef(hayCambiosEstado);
+  useEffect(() => {
+    hayCambiosRef.current = hayCambiosEstado;
+  });
+
   useEffect(() => {
     return onSnapshot(doc(db, `proyectos/${proyecto.id}/tareas/${tareaInicial.id}`), (snap) => {
       if (!snap.exists()) return;
       const t = snap.data() as Tarea;
       setTarea(t);
-      setEstado(t.estado);
-      setPorcentaje(t.porcentaje);
+      if (!hayCambiosRef.current) {
+        setEstado(t.estado);
+        setPorcentaje(t.porcentaje);
+      }
     });
   }, [proyecto.id, tareaInicial.id]);
 
-  const criteriosSinMarcar = contenido.criteriosVerificacion.filter((_, i) => !tarea.verificacion?.[i]).length;
-  const hayCambiosEstado = estado !== tarea.estado || porcentaje !== tarea.porcentaje;
+  const abrirEditar = () => {
+    setDialogGen((g) => g + 1); // fuerza a TareaDialog a remontar con los valores actuales de `tarea`
+    setDialogAbierto(true);
+  };
 
   const cambiarEstadoSelect = (v: EstadoTarea) => {
     setEstado(v);
@@ -186,7 +203,7 @@ export function FichaTarea({
           </div>
           <div className="flex gap-2">
             {puedeEditar && (
-              <Button variant="outline" size="sm" onClick={() => setDialogAbierto(true)}>
+              <Button variant="outline" size="sm" onClick={abrirEditar}>
                 Editar
               </Button>
             )}
@@ -377,6 +394,7 @@ export function FichaTarea({
 
       {puedeEditar && (
         <TareaDialog
+          key={dialogGen}
           open={dialogAbierto}
           onOpenChange={setDialogAbierto}
           proyectoId={proyecto.id}
@@ -384,6 +402,7 @@ export function FichaTarea({
           zonasDisponibles={zonasDisponibles}
           etapasDisponibles={etapasDisponibles}
           responsablesDisponibles={responsablesDisponibles}
+          puedeEditarAjena={puedeEditarAjena}
         />
       )}
 

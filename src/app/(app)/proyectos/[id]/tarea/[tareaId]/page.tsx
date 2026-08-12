@@ -58,9 +58,9 @@ export default async function FichaTareaPage({
     return { id: leccionId, titulo: l?.titulo ?? leccionId, modulo: leccionId.split(".")[0] };
   });
 
+  const puedeEditarAjena = puede(usuario.rol, "editarTareaAjena");
   const puedeEditar =
-    puede(usuario.rol, "editarTareaAjena") ||
-    (puede(usuario.rol, "editarTareaPropia") && tarea.responsableUid === usuario.uid);
+    puedeEditarAjena || (puede(usuario.rol, "editarTareaPropia") && tarea.responsableUid === usuario.uid);
 
   return (
     <FichaTarea
@@ -75,6 +75,7 @@ export default async function FichaTareaPage({
       etapasDisponibles={etapasDisponibles}
       responsablesDisponibles={responsablesDisponibles}
       puedeEditar={puedeEditar}
+      puedeEditarAjena={puedeEditarAjena}
       puedeEliminar={puede(usuario.rol, "eliminarTarea")}
     />
   );

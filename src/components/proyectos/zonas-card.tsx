@@ -130,21 +130,20 @@ function ZonaNavCard({
   const venc = tareas.filter(estaVencida).length;
 
   return (
-    <Link
-      href={`/proyectos/${proyectoId}/zona/${slug}`}
-      className="flex flex-col gap-2 rounded-lg border border-border p-3 transition-colors hover:border-primary/40"
-    >
+    <div className="flex flex-col gap-2 rounded-lg border border-border p-3 transition-colors hover:border-primary/40">
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-sm font-medium">{nombre ?? "Sin zona"}</span>
+        <Link
+          href={`/proyectos/${proyectoId}/zona/${slug}`}
+          className="truncate text-sm font-medium hover:underline"
+        >
+          {nombre ?? "Sin zona"}
+        </Link>
         <div className="flex items-center gap-2">
           {onEliminar && (
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onEliminar();
-              }}
+              onClick={onEliminar}
               className="text-muted-foreground hover:text-estado-bloqueada"
+              aria-label={`Quitar zona ${nombre ?? "Sin zona"}`}
               title="Quitar zona"
             >
               ✕
@@ -166,7 +165,7 @@ function ZonaNavCard({
           </Badge>
         )}
       </div>
-    </Link>
+    </div>
   );
 }
 

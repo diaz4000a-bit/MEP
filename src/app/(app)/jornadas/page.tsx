@@ -6,7 +6,7 @@ import { JornadasFiltros } from "@/components/jornada/jornadas-filtros";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
-import { diaSemanaDeFecha, horarioVacio, minutosProgramadosDia, rangoFechas } from "@/lib/horarios";
+import { diaSemanaDeFecha, horarioVacio, minutosProgramadosDia, rangoFechas, validarDias } from "@/lib/horarios";
 import { esJornadaColgada, fechaBogota, formatearDuracion, formatearHora } from "@/lib/jornadas";
 import type { HorarioSemanal, Jornada, Proyecto, Usuario } from "@/types";
 
@@ -65,9 +65,11 @@ export default async function JornadasPage({
   const nombreObjetivo =
     uidObjetivo === usuario.uid ? usuario.nombre : (usuarios.find((u) => u.uid === uidObjetivo)?.nombre ?? "—");
   const puedeEditarHorario = uidObjetivo === usuario.uid || puede(usuario.rol, "gestionarEquipo");
-  const horarioDias: HorarioSemanal["dias"] = horarioSnap.exists
-    ? (horarioSnap.data() as HorarioSemanal).dias
-    : horarioVacio();
+  // `validarDias` normaliza cualquier documento con forma inesperada (escrito antes de esta
+  // validación, o editado a mano en la consola de Firestore) en vez de dejar que `HorarioCard`
+  // reviente al indexar un día que no trae `manana`/`tarde`.
+  const horarioDias: HorarioSemanal["dias"] =
+    (horarioSnap.exists && validarDias((horarioSnap.data() as HorarioSemanal).dias)) || horarioVacio();
 
   const minutosPorFecha = new Map<string, number>();
   for (const j of todasEnRango) {

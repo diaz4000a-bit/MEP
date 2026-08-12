@@ -38,6 +38,7 @@ export function TareaDialog({
   zonasDisponibles,
   etapasDisponibles,
   responsablesDisponibles,
+  puedeEditarAjena = true,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,8 +49,12 @@ export function TareaDialog({
   zonasDisponibles: string[];
   etapasDisponibles: string[];
   responsablesDisponibles: Responsable[];
+  /** Sin esto, editar una tarea propia solo permite tocar estado/%/horas reales/comentarios/bloqueo — el
+   * resto queda deshabilitado porque `actualizarTarea` los ignora igual sin editarTareaAjena. */
+  puedeEditarAjena?: boolean;
 }) {
   const editando = !!tarea;
+  const soloPropia = editando && !puedeEditarAjena;
   const [pending, startTransition] = useTransition();
 
   const [nombre, setNombre] = useState(tarea?.nombre ?? "");
@@ -123,14 +128,21 @@ export function TareaDialog({
           <DialogTitle>{editando ? "Editar tarea" : "Nueva tarea"}</DialogTitle>
         </DialogHeader>
 
+        {soloPropia && (
+          <p className="-mt-2 text-xs text-muted-foreground">
+            Solo puedes actualizar el progreso de tu propia tarea. Para cambiar responsable, prioridad, fechas u
+            otros datos, pídeselo a tu coordinador.
+          </p>
+        )}
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <Label htmlFor="t-nombre">Nombre de la tarea *</Label>
-            <Input id="t-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+            <Input id="t-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} disabled={soloPropia} />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Grupo</Label>
+            <Label htmlFor="t-grupo">Grupo</Label>
             <Select
               value={grupo}
               items={Object.fromEntries(GRUPOS.map((g) => [g.id, g.nombre]))}
@@ -138,8 +150,9 @@ export function TareaDialog({
                 setGrupo(v as GrupoId);
                 setSubgrupo("");
               }}
+              disabled={soloPropia}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="t-grupo" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -152,9 +165,9 @@ export function TareaDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Subgrupo</Label>
-            <Select value={subgrupo} onValueChange={(v) => setSubgrupo(v ?? "")}>
-              <SelectTrigger className="w-full">
+            <Label htmlFor="t-subgrupo">Subgrupo</Label>
+            <Select value={subgrupo} onValueChange={(v) => setSubgrupo(v ?? "")} disabled={soloPropia}>
+              <SelectTrigger id="t-subgrupo" className="w-full">
                 <SelectValue placeholder="Selecciona…" />
               </SelectTrigger>
               <SelectContent>
@@ -168,13 +181,14 @@ export function TareaDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Zona / Modelo</Label>
+            <Label htmlFor="t-zona">Zona / Modelo</Label>
             <Select
               value={zona || SIN_ZONA}
               items={{ [SIN_ZONA]: "— Sin zona —", ...Object.fromEntries(zonasDisponibles.map((z) => [z, z])) }}
               onValueChange={(v) => setZona(!v || v === SIN_ZONA ? "" : v)}
+              disabled={soloPropia}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="t-zona" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -188,9 +202,9 @@ export function TareaDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Categoría</Label>
-            <Select value={categoria} onValueChange={(v) => setCategoria(v as Categoria)}>
-              <SelectTrigger className="w-full">
+            <Label htmlFor="t-categoria">Categoría</Label>
+            <Select value={categoria} onValueChange={(v) => setCategoria(v as Categoria)} disabled={soloPropia}>
+              <SelectTrigger id="t-categoria" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -211,6 +225,7 @@ export function TareaDialog({
               placeholder="Ej: 2.1 Anteproyecto"
               value={etapa}
               onChange={(e) => setEtapa(e.target.value)}
+              disabled={soloPropia}
             />
             <datalist id="dl-etapas">
               {etapasDisponibles.map((e) => (
@@ -219,9 +234,9 @@ export function TareaDialog({
             </datalist>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Responsable *</Label>
-            <Select value={responsable} onValueChange={(v) => v && cambiarResponsable(v)}>
-              <SelectTrigger className="w-full">
+            <Label htmlFor="t-responsable">Responsable *</Label>
+            <Select value={responsable} onValueChange={(v) => v && cambiarResponsable(v)} disabled={soloPropia}>
+              <SelectTrigger id="t-responsable" className="w-full">
                 <SelectValue placeholder="Selecciona…" />
               </SelectTrigger>
               <SelectContent>
@@ -235,9 +250,9 @@ export function TareaDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Prioridad</Label>
-            <Select value={prioridad} onValueChange={(v) => setPrioridad(v as Prioridad)}>
-              <SelectTrigger className="w-full">
+            <Label htmlFor="t-prioridad">Prioridad</Label>
+            <Select value={prioridad} onValueChange={(v) => setPrioridad(v as Prioridad)} disabled={soloPropia}>
+              <SelectTrigger id="t-prioridad" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -250,9 +265,9 @@ export function TareaDialog({
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Estado</Label>
+            <Label htmlFor="t-estado">Estado</Label>
             <Select value={estado} onValueChange={(v) => cambiarEstado(v as EstadoTarea)}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="t-estado" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -296,11 +311,23 @@ export function TareaDialog({
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="t-finicio">Fecha de inicio</Label>
-            <Input id="t-finicio" type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
+            <Input
+              id="t-finicio"
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              disabled={soloPropia}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="t-flimite">Fecha límite</Label>
-            <Input id="t-flimite" type="date" value={fechaLimite} onChange={(e) => setFechaLimite(e.target.value)} />
+            <Input
+              id="t-flimite"
+              type="date"
+              value={fechaLimite}
+              onChange={(e) => setFechaLimite(e.target.value)}
+              disabled={soloPropia}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -312,6 +339,7 @@ export function TareaDialog({
               step={0.5}
               value={horasEstimadas}
               onChange={(e) => setHorasEstimadas(Number(e.target.value))}
+              disabled={soloPropia}
             />
           </div>
           <div className="flex flex-col gap-1.5">
