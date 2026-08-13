@@ -1,7 +1,7 @@
 import "server-only";
 import { GUIA_MODULOS } from "@/content/guia";
-import { adminDb } from "@/lib/firebase/admin";
-import type { EstadoTarea, Proyecto, Tarea } from "@/types";
+import { leerProyectos, leerTareas } from "@/lib/datos";
+import type { EstadoTarea, Tarea } from "@/types";
 
 export interface ItemBusqueda {
   tipo: "Proyectos" | "Zonas" | "Tareas" | "Guía";
@@ -16,14 +16,18 @@ export interface ItemBusqueda {
 
 /** Índice plano de todo lo navegable: proyectos, zonas, tareas y lecciones de la guía. */
 export async function construirIndiceBusqueda(): Promise<ItemBusqueda[]> {
-  const [proyectosSnap, tareasSnap] = await Promise.all([
-    adminDb.collection("proyectos").get(),
-    adminDb.collectionGroup("tareas").get(),
-  ]);
+  const [proyectos, tareas] = await Promise.all([leerProyectos(), leerTareas()]);
 
-  const proyectos = proyectosSnap.docs.map((d) => d.data() as Proyecto);
-  const tareas = tareasSnap.docs.map((d) => d.data() as Tarea);
   const proyectosPorId = new Map(proyectos.map((p) => [p.id, p]));
+  // Un solo agrupado por proyecto en vez de recorrer `tareas` entera dentro del
+  // bucle de proyectos: era O(P x T) y con 20 proyectos x 2000 tareas daba 40.000
+  // iteraciones por render del layout, o sea en cada carga de página.
+  const tareasPorProyecto = new Map<string, Tarea[]>();
+  for (const t of tareas) {
+    const lista = tareasPorProyecto.get(t.proyectoId);
+    if (lista) lista.push(t);
+    else tareasPorProyecto.set(t.proyectoId, [t]);
+  }
 
   const items: ItemBusqueda[] = [];
 
@@ -38,8 +42,8 @@ export async function construirIndiceBusqueda(): Promise<ItemBusqueda[]> {
     });
 
     const zonas = new Set(p.zonas ?? []);
-    for (const t of tareas) {
-      if (t.proyectoId === p.id && t.zona) zonas.add(t.zona);
+    for (const t of tareasPorProyecto.get(p.id) ?? []) {
+      if (t.zona) zonas.add(t.zona);
     }
     for (const z of zonas) {
       items.push({

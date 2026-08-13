@@ -1,10 +1,17 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { cache } from 'react';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
 import type { Rol, Usuario } from '@/types';
 
-export async function usuarioActual(): Promise<Usuario | null> {
+/**
+ * `cache()` de React deduplica esto dentro de un mismo request. El layout de (app)
+ * y cada page llaman a `exigirUsuario()` por separado, así que sin esto cada carga
+ * pagaba DOS veces el RPC a Identity Toolkit y DOS lecturas del doc de usuario.
+ * El alcance es el request, nunca entre usuarios: no puede filtrar una sesión a otra.
+ */
+export const usuarioActual = cache(async (): Promise<Usuario | null> => {
   const jar = await cookies();
   const cookie = jar.get('sesion')?.value;
   if (!cookie) return null;
@@ -19,7 +26,7 @@ export async function usuarioActual(): Promise<Usuario | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function exigirUsuario(): Promise<Usuario> {
   const u = await usuarioActual();

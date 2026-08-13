@@ -12,9 +12,10 @@ import {
   tareaEnCurso,
   tareasUrgentes,
 } from "@/lib/dashboard";
+import { leerProyectos, leerTareas } from "@/lib/datos";
 import { adminDb } from "@/lib/firebase/admin";
 import { fechaBogota } from "@/lib/jornadas";
-import type { EstadoTarea, Jornada, Proyecto, Tarea } from "@/types";
+import type { EstadoTarea, Jornada } from "@/types";
 
 const ESTADOS: EstadoTarea[] = ["Sin iniciar", "En progreso", "En revisión", "Completada", "Bloqueada"];
 
@@ -27,14 +28,15 @@ function hace90Dias(): string {
 export default async function DashboardPage() {
   const usuario = await exigirUsuario();
 
-  const [tareasSnap, proyectosSnap, jornadasSnap] = await Promise.all([
-    adminDb.collectionGroup("tareas").get(),
-    adminDb.collection("proyectos").get(),
+  // `leerTareas`/`leerProyectos` están memoizadas por request: el layout de (app) ya
+  // las pidió para el índice de búsqueda, así que aquí no se repite el escaneo.
+  const [tareas, proyectosSinOrden, jornadasSnap] = await Promise.all([
+    leerTareas(),
+    leerProyectos(),
     adminDb.collection("jornadas").where("fecha", ">=", hace90Dias()).get(),
   ]);
 
-  const tareas = tareasSnap.docs.map((d) => d.data() as Tarea);
-  const proyectos = proyectosSnap.docs.map((d) => d.data() as Proyecto).sort((a, b) => a.avanceTotal - b.avanceTotal);
+  const proyectos = [...proyectosSinOrden].sort((a, b) => a.avanceTotal - b.avanceTotal);
   const jornadas = jornadasSnap.docs.map((d) => d.data() as Jornada);
   const proyectosPorId = new Map(proyectos.map((p) => [p.id, p.nombre]));
 

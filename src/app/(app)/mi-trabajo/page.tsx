@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { exigirUsuario } from "@/lib/auth/sesion";
-import { adminDb } from "@/lib/firebase/admin";
+import { leerProyectos, leerTareas } from "@/lib/datos";
 import { diasHasta, ESTILO_ESTADO, fechaLegible } from "@/lib/tareas";
-import type { Proyecto, Tarea } from "@/types";
+import type { Tarea } from "@/types";
 
 type Urgencia = "vencida" | "hoy" | "semana" | "resto";
 
@@ -21,13 +21,12 @@ function urgenciaDe(t: Tarea): Urgencia {
 export default async function MiTrabajoPage() {
   const usuario = await exigirUsuario();
 
-  const [tareasSnap, proyectosSnap] = await Promise.all([
-    adminDb.collectionGroup("tareas").get(),
-    adminDb.collection("proyectos").get(),
-  ]);
+  // Memoizadas por request: reutiliza el escaneo que el layout de (app) ya hizo para
+  // el índice de búsqueda en vez de repetirlo.
+  const [tareas, proyectos] = await Promise.all([leerTareas(), leerProyectos()]);
 
-  const proyectosPorId = new Map(proyectosSnap.docs.map((d) => [d.id, (d.data() as Proyecto).nombre]));
-  const misTareas = tareasSnap.docs.map((d) => d.data() as Tarea).filter((t) => t.responsableUid === usuario.uid);
+  const proyectosPorId = new Map(proyectos.map((p) => [p.id, p.nombre]));
+  const misTareas = tareas.filter((t) => t.responsableUid === usuario.uid);
 
   const activas = misTareas.filter((t) => t.estado !== "Completada");
   const completadas = misTareas.filter((t) => t.estado === "Completada");

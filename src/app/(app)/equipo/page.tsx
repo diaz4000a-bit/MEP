@@ -2,24 +2,26 @@ import { GestionEquipo } from "@/components/equipo/gestion-equipo";
 import { PersonaCard } from "@/components/equipo/persona-card";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
+import { leerProyectos, leerTareas } from "@/lib/datos";
 import { agruparPorResponsable } from "@/lib/equipo";
 import { adminDb } from "@/lib/firebase/admin";
-import type { Proyecto, Tarea, Usuario } from "@/types";
+import type { Usuario } from "@/types";
 
 export default async function EquipoPage() {
   const usuario = await exigirUsuario();
 
-  const [usuariosSnap, equipoSnap, tareasSnap, proyectosSnap] = await Promise.all([
+  // Memoizadas por request: el layout de (app) ya escaneó tareas y proyectos para el
+  // índice de búsqueda, así que esta page reutiliza ese resultado en vez de repetirlo.
+  const [usuariosSnap, equipoSnap, tareas, proyectos] = await Promise.all([
     adminDb.collection("usuarios").where("activo", "==", true).get(),
     adminDb.doc("config/equipo").get(),
-    adminDb.collectionGroup("tareas").get(),
-    adminDb.collection("proyectos").get(),
+    leerTareas(),
+    leerProyectos(),
   ]);
 
   const nombresUsuarios = usuariosSnap.docs.map((d) => (d.data() as Usuario).nombre);
   const membersLegacy = (equipoSnap.data()?.membersLegacy as string[] | undefined) ?? [];
-  const tareas = tareasSnap.docs.map((d) => d.data() as Tarea);
-  const proyectosPorId = new Map(proyectosSnap.docs.map((d) => [d.id, (d.data() as Proyecto).nombre]));
+  const proyectosPorId = new Map(proyectos.map((p) => [p.id, p.nombre]));
 
   const personas = agruparPorResponsable(tareas, nombresUsuarios, membersLegacy);
 
