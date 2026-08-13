@@ -1,3 +1,4 @@
+import { REF, notaCriterio, notaNorma, notaNormaVerificar } from './normas';
 import type { TareaCatalogo } from '../types';
 
 export const CATALOGO_05: TareaCatalogo[] = [
@@ -10,6 +11,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 4,
+    prioridad: 'Alta',
     dependeDe: ['PB-02-14', 'PB-02-15'],
     guiaIds: ['M7.1', 'M2.6'],
     descripcion:
@@ -38,11 +41,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'Los tramos corregidos quedan documentados con comentario en el parámetro de observaciones.',
     ],
     notasIngenieria: [
-      {
-        texto: 'La continuidad de canalización es un criterio de control interno, no una comprobación normativa directa.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Una canalización discontinua en el modelo suele traducirse en cantidades incompletas y en un montaje improvisado en obra; la continuidad mecánica de la canalización es además un requisito de instalación.', REF.CANALIZACIONES),
     ],
     tipsRevit: [
       'Usa Vista > Aislar categoría temporalmente para mostrar solo Conductos eléctricos y Bandejas de cables.',
@@ -59,6 +58,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Alta',
     dependeDe: ['PB-02-09', 'PB-02-10'],
     guiaIds: ['M7.1', 'M2.1'],
     descripcion:
@@ -87,11 +88,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'Todos los circuitos tienen definida su carga y fase correctamente.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Esta verificación es un control de modelado interno; no corresponde a una norma específica.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNormaVerificar('Un circuito sin protección asignada en el modelo produce un cuadro de cargas incompleto y una demanda subestimada; todo circuito debe quedar protegido contra sobrecorrientes.', REF.SOBRECORRIENTES),
     ],
     tipsRevit: [
       'Usa Sistemas > Eléctrico > Explorador de sistemas para navegar por panel y circuito.',
@@ -108,6 +105,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 4,
+    prioridad: 'Media',
     dependeDe: ['PB-02-02', 'PB-02-04'],
     guiaIds: ['M7.1', 'M5.2'],
     descripcion:
@@ -136,11 +135,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'El parámetro "Alimentado desde" coincide con el circuito de origen mostrado en el diagrama unifilar.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Verificación de trazabilidad de alimentadores a nivel de modelo; no sustituye el cálculo de caída de tensión.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('La conexión entre la red interna y la red del operador se rige por los requisitos de acometidas del RETIE y por la norma del operador de red de la zona.', REF.ACOMETIDAS),
     ],
     tipsRevit: [
       'Usa Copiar/Monitorear o un vínculo visible para superponer el modelo de urbanismo sobre el eléctrico.',
@@ -157,6 +152,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 4,
+    prioridad: 'Media',
     dependeDe: ['PB-02-09', 'PB-02-14'],
     guiaIds: ['M7.1', 'M5.3'],
     descripcion:
@@ -185,11 +182,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La lista de chequeo queda sin cajas pendientes de verificación al cierre de la revisión.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Control de coherencia entre modelo y diagrama unifilar; no reemplaza el cálculo de calibre de conductor.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Las cajas y conduletas deben permanecer accesibles y respetar su capacidad; un enrutamiento que las deja tapadas o sobrecargadas incumple aunque el modelo cierre.', REF.CAJAS_CONDULETAS),
     ],
     tipsRevit: [
       'Selecciona el circuito y usa "Mostrar recorrido de conductos" en la cinta Sistemas eléctricos.',
@@ -206,6 +199,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 4,
+    prioridad: 'Alta',
     dependeDe: ['PB-01-01', 'PB-02-01'],
     guiaIds: ['M7.1', 'M5.1'],
     descripcion:
@@ -234,12 +229,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'No quedan discrepancias sin resolver en la lista de observaciones al cierre de la revisión.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'La acometida es un elemento normado por RETIE, pero esta tarea es un control de coherencia entre modelo y memoria de cálculo, no una verificación normativa exhaustiva.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNormaVerificar('La acometida debe corresponder a lo aprobado por el operador de red y a los requisitos del RETIE; una diferencia entre lo modelado y lo aprobado bloquea la energización.', REF.ACOMETIDAS),
     ],
     tipsRevit: [
       'Usa el parámetro "Tipo de conductor" en las propiedades de instancia para comparar contra la memoria de cálculo.',
@@ -256,6 +246,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 3,
+    prioridad: 'Baja',
     dependeDe: ['PB-02-03', 'PB-02-12'],
     guiaIds: ['M7.1', 'M5.5'],
     descripcion:
@@ -284,11 +276,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La ubicación de las salidas eléctricas asociadas coincide con la altura y muro definidos para el punto de datos.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Buena práctica de coordinación interna entre disciplinas eléctrica y de comunicaciones, sin referencia normativa específica.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Las salidas de comunicaciones que alimentan equipo activo requieren una toma con polo a tierra próxima; el requisito de instalación de esa toma es el del artículo de clavijas y tomacorrientes.', REF.TOMACORRIENTES),
     ],
     tipsRevit: [
       'Usa Filtros de vista para colorear por separado las categorías Datos y Tomacorrientes.',
@@ -305,6 +293,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 2,
+    prioridad: 'Media',
     dependeDe: ['PB-02-03', 'PB-02-12'],
     guiaIds: ['M7.1', 'M5.5'],
     descripcion:
@@ -332,11 +322,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La ubicación de la toma coincide con la altura y posición definidas para el gabinete PAU.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Requisito operativo de los proveedores de telecomunicaciones; no se cita norma específica sin confirmarla con el proyecto.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('El punto de acceso al usuario aloja equipo activo permanente y requiere toma dedicada con polo a tierra; compartirla con otros usos deja el servicio expuesto a desconexiones accidentales.', REF.TOMACORRIENTES),
     ],
     tipsRevit: [
       'Filtra la vista por la categoría del gabinete PAU si está modelado como familia propia.',
@@ -353,6 +339,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 4,
+    prioridad: 'Alta',
     dependeDe: ['PB-01-03', 'PB-02-14'],
     guiaIds: ['M7.1', 'M2.6'],
     descripcion:
@@ -381,11 +369,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La tabla de planificación no muestra ductos sin nivel o sistema asignado.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Control dimensional interno del modelo frente al predimensionamiento del proyecto.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNormaVerificar('La sección del ducto debe corresponder al porcentaje máximo de ocupación calculado para sus conductores; un ducto subdimensionado obliga a rehacer la canalización en obra.', REF.CANALIZACIONES),
     ],
     tipsRevit: [
       'Crea una tabla de planificación de la categoría Bandejas de cables con los campos Ancho, Alto y Nivel.',
@@ -402,6 +386,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 3,
+    prioridad: 'Alta',
     dependeDe: ['PB-02-15', 'PB-03-16'],
     guiaIds: ['M7.5', 'M5.4'],
     descripcion:
@@ -430,12 +416,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La lista de chequeo no contiene letreros pendientes al cierre de la validación.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'La señalización de emergencia es un elemento de seguridad de vida contemplado por RETIE; se recomienda que el ingeniero de proyecto confirme el circuito y la norma aplicable exacta antes de cerrar la tarea.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('La señalización de evacuación retroiluminada forma parte del sistema de emergencia y debe alimentarse desde la fuente de respaldo, no desde el circuito de alumbrado normal.', REF.SISTEMAS_EMERGENCIA),
+      notaNormaVerificar('La autonomía y la iluminancia exigidas a la señalización de evacuación las fija el RETILAP; confirmar los valores aplicables al proyecto.', REF.ILUM_EMERGENCIA),
     ],
     tipsRevit: [
       'Filtra la vista de iluminación por el parámetro "Tipo de familia" para aislar los letreros de emergencia.',
@@ -452,6 +434,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 3,
+    prioridad: 'Media',
     dependeDe: ['PB-02-03', 'PB-02-12'],
     guiaIds: ['M7.5', 'M5.5'],
     descripcion:
@@ -479,11 +463,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La lista de chequeo no contiene puntos pendientes al cierre de la validación.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Requisito funcional coordinado con el diseño de seguridad electrónica del proyecto, sin norma eléctrica específica asociada.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Un electroimán de control de acceso en una ruta de evacuación debe liberar la puerta al faltar la energía o al activarse la alarma; su alimentación debe estar coordinada con el sistema de emergencia y no ser un circuito cualquiera.', REF.SISTEMAS_EMERGENCIA),
     ],
     tipsRevit: [
       'Usa el parámetro compartido "Uso" en la familia de tomacorriente para marcar las destinadas a control de acceso.',
@@ -500,6 +480,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 3,
+    prioridad: 'Media',
     dependeDe: ['PB-02-03', 'PB-02-12'],
     guiaIds: ['M7.5', 'M5.5'],
     descripcion:
@@ -527,11 +509,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La lista de chequeo no contiene puntos pendientes al cierre de la validación.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Coordinación funcional con el proyecto de seguridad electrónica; sin norma eléctrica específica asociada.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Las talanqueras y accesos motorizados son cargas con motor: su protección y su medio de desconexión siguen los requisitos del artículo de motores del RETIE, no los de una carga resistiva.', REF.MOTORES_GRUPOS),
     ],
     tipsRevit: [
       'Vincula el plano de seguridad como CAD para ubicar con precisión cada talanquera.',
@@ -548,6 +526,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 3,
+    prioridad: 'Media',
     dependeDe: ['PB-02-03', 'PB-02-12'],
     guiaIds: ['M7.5', 'M5.5'],
     descripcion:
@@ -576,11 +556,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La lista de chequeo no contiene puntos pendientes al cierre de la validación.',
     ],
     notasIngenieria: [
-      {
-        texto: 'El dimensionamiento definitivo del circuito depende de la ficha técnica real del motor suministrado por el proveedor.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Los motores de puertas vehiculares requieren medio de desconexión accesible y protección acorde a su corriente de arranque, según los requisitos de motores del RETIE.', REF.MOTORES_GRUPOS),
     ],
     tipsRevit: [
       'Revisa el parámetro "Carga aparente" del circuito asignado al motor y compáralo con la ficha técnica.',
@@ -597,6 +573,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 3,
+    prioridad: 'Baja',
     dependeDe: ['PB-02-03', 'PB-02-12'],
     guiaIds: ['M7.5', 'M5.5'],
     descripcion:
@@ -624,11 +602,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'La lista de chequeo no contiene puntos pendientes al cierre de la validación.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Coordinación funcional con el proyecto de seguridad electrónica (CCTV); sin norma eléctrica específica asociada.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Las cámaras y el equipo de grabación del CCTV requieren tomas con polo a tierra y, cuando el servicio es crítico, respaldo; la toma debe cumplir el artículo de clavijas y tomacorrientes.', REF.TOMACORRIENTES),
     ],
     tipsRevit: [
       'Vincula el plano de seguridad electrónica como CAD para ubicar con precisión cada cámara.',
@@ -645,6 +619,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 1,
+    horasEstimadas: 2,
+    prioridad: 'Baja',
     dependeDe: ['PB-02-10', 'PB-03-20'],
     guiaIds: ['M7.5', 'M5.4'],
     descripcion:
@@ -672,11 +648,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'No quedan inconsistencias abiertas en la lista de chequeo al cierre de la validación.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Verificación funcional de diseño; no corresponde a un requisito normativo específico.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNormaVerificar('La iluminación de vallas y letreros exteriores está sujeta a los requisitos de iluminación exterior y de control de contaminación lumínica del RETILAP.', REF.ILUM_EXTERIOR),
     ],
     tipsRevit: [
       'Filtra la vista de alumbrado exterior por el parámetro "Uso: Señalización" si está definido como parámetro compartido.',
@@ -693,6 +665,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 1,
+    horasEstimadas: 2,
+    prioridad: 'Baja',
     dependeDe: ['PB-02-10', 'PB-03-20'],
     guiaIds: ['M7.5', 'M5.4'],
     descripcion:
@@ -720,11 +694,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'No quedan inconsistencias abiertas en la lista de chequeo al cierre de la validación.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Verificación funcional de diseño; no corresponde a un requisito normativo específico.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNormaVerificar('La iluminación de señalización y nomenclatura en exteriores se rige por los requisitos de iluminación exterior del RETILAP.', REF.ILUM_EXTERIOR),
     ],
     tipsRevit: [
       'Filtra la vista de alumbrado exterior por el parámetro "Uso: Nomenclatura" si está definido como parámetro compartido.',
@@ -741,6 +711,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 4,
+    prioridad: 'Media',
     dependeDe: ['PB-02-09'],
     guiaIds: ['M7.2', 'M7.1'],
     descripcion:
@@ -768,11 +740,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'El conteo total de warnings del modelo eléctrico disminuyó respecto a la exportación inicial.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Auditoría de calidad interna del modelo; no corresponde a un requisito normativo.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('El modelo es el soporte de los planos que se someten a revisión e inspección; un modelo con advertencias sin resolver produce cantidades y tablas poco confiables en ese trámite.', REF.REVISION_INSTALACIONES),
+      notaCriterio('No todas las advertencias de Revit tienen la misma gravedad: conviene priorizar las que afectan conectividad de sistemas, duplicados y elementos superpuestos antes que las puramente geométricas.'),
     ],
     tipsRevit: [
       'Usa Administrar > Revisar advertencias y el botón "Exportar" para generar el listado en HTML.',
@@ -790,6 +759,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     categoria: 'Revisión y QC',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 4,
+    prioridad: 'Media',
     dependeDe: ['PB-03-01'],
     guiaIds: ['M7.3', 'M7.4'],
     descripcion:
@@ -818,11 +789,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
       'Las tablas de planificación regeneradas no muestran observaciones pendientes de nomenclatura o duplicados.',
     ],
     notasIngenieria: [
-      {
-        texto: 'Estándar de nomenclatura definido internamente por el estudio; no corresponde a una norma externa.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Los tableros y circuitos deben quedar identificados de forma inequívoca; dos tableros con el mismo nombre en el modelo producen un cuadro de cargas ambiguo que no sirve para operar la instalación.', REF.CELDAS_TABLEROS),
     ],
     tipsRevit: [
       'Usa una tabla de planificación de "Familias y tipos" con el campo Nombre para revisar en bloque.',

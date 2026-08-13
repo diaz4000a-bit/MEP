@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { FichaTarea } from "@/components/tareas/ficha-tarea";
-import { CATALOGO_TAREAS_MAP } from "@/content/catalogo-tareas";
 import { LECCIONES } from "@/content/guia";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
+import { catalogoVigente } from "@/lib/catalogo-vigente";
 import { adminDb } from "@/lib/firebase/admin";
 import { contenidoTarea } from "@/lib/contenido";
 import type { Proyecto, Tarea, Usuario } from "@/types";
@@ -44,11 +44,12 @@ export default async function FichaTareaPage({
   ];
   const etapasDisponibles = [...new Set(tareasProyecto.map((t) => t.etapa).filter((e): e is string => !!e))];
 
-  const catalogo = tarea.plantillaId ? CATALOGO_TAREAS_MAP.get(tarea.plantillaId) : undefined;
-  const contenido = contenidoTarea(tarea);
+  const { mapa: catalogoMapa } = await catalogoVigente();
+  const catalogo = tarea.plantillaId ? catalogoMapa.get(tarea.plantillaId) : undefined;
+  const contenido = await contenidoTarea(tarea);
 
   const dependencias = (catalogo?.dependeDe ?? []).map((plantillaId) => {
-    const c = CATALOGO_TAREAS_MAP.get(plantillaId);
+    const c = catalogoMapa.get(plantillaId);
     const enProyecto = tareasProyecto.find((t) => t.plantillaId === plantillaId);
     return { plantillaId, nombre: c?.nombre ?? plantillaId, tareaId: enProyecto?.id ?? null };
   });

@@ -1,3 +1,4 @@
+import { REF, notaCriterio, notaNorma } from './normas';
 import type { TareaCatalogo } from '../types';
 
 export const CATALOGO_07: TareaCatalogo[] = [
@@ -10,6 +11,8 @@ export const CATALOGO_07: TareaCatalogo[] = [
     categoria: 'Coordinación MEP',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 4,
+    prioridad: 'Media',
     dependeDe: ['PB-04-02'],
     guiaIds: ['M6.3', 'M6.4', 'M6.5'],
     descripcion:
@@ -50,21 +53,8 @@ export const CATALOGO_07: TareaCatalogo[] = [
       'Cada responsable asignado recibió la notificación de su incidencia',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'La prioridad asignada a cada incidencia conviene que refleje su impacto en la ruta crítica del ' +
-          'cronograma y no solo la gravedad técnica del conflicto, para evitar que incidencias urgentes por ' +
-          'plazo queden mal priorizadas.',
-        fuente: null,
-        verificar: true,
-      },
-      {
-        texto:
-          'Antes de registrar una incidencia importada conviene revisar si ya existe una tarea equivalente ' +
-          'de una ronda de coordinación anterior, para no duplicar el seguimiento del mismo conflicto.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Las incidencias que afectan requisitos del reglamento no se cierran por acuerdo de obra: deben resolverse antes de la revisión de la instalación, porque son las que bloquean la conformidad.', REF.REVISION_INSTALACIONES),
+      notaCriterio('Conviene marcar desde el triaje qué incidencias tienen implicación normativa y cuáles son de coordinación, porque su ruta de cierre y su urgencia son distintas.'),
     ],
     tipsRevit: [
       "Usa el comando 'Seleccionar por ID' (pestaña Administrar > Selección) para ubicar en el modelo el elemento referenciado por el ID de clash del informe de coordinación.",

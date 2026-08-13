@@ -1,3 +1,4 @@
+import { REF, notaCriterio, notaNorma, notaNormaVerificar } from './normas';
 import type { TareaCatalogo } from '../types';
 
 export const CATALOGO_06: TareaCatalogo[] = [
@@ -10,6 +11,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Documentación',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ['PB-02-01', 'PB-01-01'],
     guiaIds: ['M5.1', 'M3.1'],
     descripcion:
@@ -37,12 +40,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'El punto de conexión coincide con la coordenada entregada por el Operador de Red.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'Los entregables para el Operador de Red en Colombia deben ajustarse a los requisitos de subestaciones del RETIE; verificar el listado de planos exigido por el operador local antes de radicar.',
-        fuente: 'RETIE',
-        verificar: true,
-      },
+      notaNorma('El plano de media tensión para el operador de red debe ser consistente con los requisitos de acometidas del RETIE y con la norma particular del operador, que puede ser más exigente.', REF.ACOMETIDAS),
+      notaNormaVerificar('Los requisitos aplicables a la red de distribución asociada dependen del punto de frontera acordado con el operador; confirmarlo antes de radicar.', REF.REDES_DISTRIBUCION),
     ],
     tipsRevit: [
       "Usa 'Duplicar vista > Con detallado' para no perder las anotaciones al crear la vista OR a partir de la vista de trabajo.",
@@ -59,6 +58,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Documentación',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Alta',
     dependeDe: ['PB-06-01', 'PB-02-01'],
     guiaIds: ['M3.4', 'M5.1'],
     descripcion:
@@ -85,12 +86,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'El callout en planta referencia correctamente la lámina de detalle.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'Las profundidades y señalización de zanjas de MT suelen estar sujetas a los requisitos del Operador de Red y al RETIE para instalaciones de media tensión; confirmar el detalle tipo vigente con el operador antes de radicar.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNormaVerificar('Los detalles de ingreso deben mostrar la protección mecánica de la canalización, el sellado del paso y el radio de curvatura del cable de media tensión.', REF.CANALIZACIONES),
+      notaNorma('El ingreso de la acometida a la subestación es parte de la instalación cubierta por el título de acometidas del RETIE.', REF.ACOMETIDAS),
     ],
     tipsRevit: [
       "Usa el comando 'Cuadro de sección' en la vista 3D y gira el ViewCube a la posición isométrica estándar (SO) antes de bloquear la vista.",
@@ -107,6 +104,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Documentación',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ['PB-01-01', 'PB-02-01', 'PB-01-02'],
     guiaIds: ['M5.1', 'M3.1'],
     descripcion:
@@ -137,12 +136,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'El cajetín de la lámina está completo con datos del proyecto.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'El diseño y las distancias de seguridad del cuarto de subestación deben cumplir los requisitos de subestaciones eléctricas del RETIE; verificar los valores exactos vigentes con el ingeniero eléctrico responsable antes de radicar el entregable.',
-        fuente: 'RETIE',
-        verificar: true,
-      },
+      notaNormaVerificar('El plano del cuarto de subestación debe acotar las distancias de seguridad y los pasillos de operación, no solo la posición de los equipos: es lo primero que revisa el operador de red.', REF.SUBESTACIONES_INTERIORES),
+      notaNorma('Los requisitos generales de subestaciones del RETIE aplican con independencia del tipo elegido y se suman a los del artículo específico del tipo.', REF.SUBESTACIONES_GENERAL),
     ],
     tipsRevit: [
       "Usa 'Rango de vista' (Propiedades de vista > Extensión de vista) para recortar el nivel superior del cuarto y evitar que la losa de entrepiso oculte el transformador.",
@@ -159,6 +154,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Modelado',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 4,
+    prioridad: 'Media',
     dependeDe: ['PB-02-17', 'PB-01-01'],
     guiaIds: ['M5.1', 'M2.1'],
     descripcion:
@@ -185,12 +182,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'La orientación del dámper corresponde al sentido de ventilación definido en el cálculo.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'La ventilación de cuartos de subestación con transformadores tipo seco u ONAN suele estar sujeta a los requisitos de ventilación del RETIE para subestaciones; confirmar el criterio de dimensionamiento aplicado en PB-02-17 antes de dar por válido el modelo.',
-        fuente: 'RETIE',
-        verificar: true,
-      },
+      notaNormaVerificar('El área de ventilación documentada debe ser área libre de paso y corresponder a las pérdidas térmicas del transformador definitivo, no al hueco del muro.', REF.COMPUERTAS_VENTILACION),
     ],
     tipsRevit: [
       'Usa una familia basada en cara (Face-based) o alojada en muro según el detalle constructivo real del dámper.',
@@ -207,6 +199,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Modelado',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Alta',
     dependeDe: ['PB-01-05', 'PB-01-01'],
     guiaIds: ['M5.1', 'M2.1'],
     descripcion:
@@ -234,12 +228,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'No hay interferencias entre cárcamos, foso de aceite y elementos estructurales.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'La capacidad de retención de aceite del foso bajo el transformador suele estar sujeta a los requisitos de subestaciones del RETIE; verificar el volumen mínimo exigido con el ingeniero eléctrico antes de fijar las dimensiones definitivas.',
-        fuente: 'RETIE',
-        verificar: true,
-      },
+      notaNorma('Los cuartos de transformador con equipos en aceite requieren contención del líquido y condiciones de ventilación y resistencia al fuego definidas en el artículo de subestaciones de media tensión tipo interior.', REF.SUBESTACION_MT_INTERIOR),
+      notaNormaVerificar('El volumen del foso de contención depende del volumen de aceite del transformador seleccionado; tomarlo de la ficha técnica del equipo y no de un valor típico.', REF.TRANSFORMADORES),
     ],
     tipsRevit: [
       "Modela el cárcamo como una familia de piso por tramo (Suelo) con función 'Rebajado' para que quede asociado al nivel del cuarto de subestación.",
@@ -256,6 +246,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Documentación',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ['PB-02-08', 'PB-02-07'],
     guiaIds: ['M5.6', 'M3.1'],
     descripcion:
@@ -282,12 +274,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'Todos los conductores de la malla tienen etiqueta de calibre visible.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'El diseño del sistema de puesta a tierra está sujeto a los requisitos de puesta a tierra del RETIE; verificar el valor de resistencia de puesta a tierra exigido y la profundidad mínima de enterramiento con el ingeniero eléctrico antes de radicar el entregable.',
-        fuente: 'RETIE',
-        verificar: true,
-      },
+      notaNorma('El plano de puesta a tierra debe mostrar el sistema completo y su integración equipotencial, incluidas las cajas de inspección que permiten medirlo.', REF.SPT_GENERAL),
+      notaNormaVerificar('El valor de resistencia de puesta a tierra exigido depende del tipo de instalación y está tabulado en el RETIE; el plano debe indicar el valor objetivo del diseño para que el inspector lo contraste con la medición.', REF.SPT_RESISTENCIA),
     ],
     tipsRevit: [
       "Modela los conductores de la malla como 'Conductores eléctricos' con el sistema clasificado como 'Puesta a tierra' para poder filtrarlos por disciplina en la plantilla de vista.",
@@ -304,6 +292,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Documentación',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ['PB-02-02', 'PB-01-01'],
     guiaIds: ['M5.2', 'M3.1'],
     descripcion:
@@ -333,12 +323,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'Cada armario medidor tiene asociado su número de circuito de origen.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'La distribución de baja tensión hasta los armarios de medidores está sujeta a los requisitos de acometidas del RETIE y a las normas particulares del Operador de Red; verificar el listado de planos y el criterio de identificación de circuitos exigido antes de radicar.',
-        fuente: 'RETIE',
-        verificar: true,
-      },
+      notaNorma('El tramo entre la subestación y los armarios de medición hace parte de la acometida y se rige por su título en el RETIE además de por la norma del operador de red.', REF.ACOMETIDAS),
+      notaNorma('Los armarios de medición y sus tableros deben cumplir los requisitos de celdas y tableros, incluida su identificación y accesibilidad.', REF.CELDAS_TABLEROS),
     ],
     tipsRevit: [
       "Usa el comando 'Copiar/Monitorear' en la pestaña Colaborar para mantener alineadas las plantas de BT con los niveles del arquitectónico vinculado.",
@@ -355,6 +341,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Documentación',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 4,
+    prioridad: 'Alta',
     dependeDe: ['PB-06-01', 'PB-06-03', 'PB-06-07'],
     guiaIds: ['M3.1', 'M9.4'],
     descripcion:
@@ -381,12 +369,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'La nomenclatura de los archivos exportados coincide con el estándar de nombres del proyecto.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'Cada Operador de Red puede exigir un estándar propio de nomenclatura y capas DWG para la radicación de planos; confirmar el estándar vigente con el operador antes de exportar el paquete final.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('El paquete radicado es el soporte documental con el que se demuestra la conformidad de la instalación; debe corresponder exactamente a lo construido y estar firmado por el responsable.', REF.DECLARACION_CUMPLIMIENTO),
+      notaCriterio('La organización de láminas y numeración debe seguir el estándar de nomenclatura definido por el estudio para el proyecto.'),
     ],
     tipsRevit: [
       "Usa 'Exportar > PDF' con la opción 'Combinar varias hojas en un archivo' para generar el PDF único del conjunto de láminas.",
@@ -404,6 +388,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
     categoria: 'Entrega',
     disciplina: 'Eléctrica',
     dificultad: 2,
+    horasEstimadas: 3,
+    prioridad: 'Alta',
     dependeDe: ['PB-06-08'],
     guiaIds: ['M9.4', 'M9.3'],
     descripcion:
@@ -430,12 +416,8 @@ export const CATALOGO_06: TareaCatalogo[] = [
       'El estado del entregable en la plataforma de gestión está marcado como publicado.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'El formato y los requisitos del acta de entrega ante el Operador de Red pueden variar según el operador y el municipio; verificar el formato exigido antes de radicar el cierre.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('La instalación no puede energizarse sin haber demostrado su conformidad; cuando se exige certificación plena, ello incluye el dictamen de inspección de un organismo acreditado.', REF.INSPECCION_CERTIFICACION),
+      notaNorma('El dictamen de inspección tiene formato y contenido reglados; entregar el paquete sin él deja el trámite incompleto ante el operador de red.', REF.DICTAMEN_INSPECCION),
     ],
     tipsRevit: [
       "Usa un parámetro compartido de 'Estado de entrega' en la hoja de proyecto o en un panel de control externo a Revit para reflejar el cierre del paquete.",

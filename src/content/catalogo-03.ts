@@ -1,3 +1,4 @@
+import { REF, notaCriterio, notaNorma, notaNormaVerificar } from './normas';
 import type { TareaCatalogo } from '../types';
 
 export const CATALOGO_03: TareaCatalogo[] = [
@@ -10,6 +11,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 2,
+    horasEstimadas: 6,
+    prioridad: 'Alta',
     dependeDe: [],
     guiaIds: ["M3.1", "M3.2"],
     descripcion: "Preparar las láminas del proyecto eléctrico creando las vistas de planta necesarias e insertándolas en los rótulos definidos para la entrega, de modo que cada vista quede correctamente encuadrada, escalada y rotulada dentro de su hoja.",
@@ -35,7 +38,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "Todas las vistas usan la plantilla de vista definida para el estudio"
     ],
     notasIngenieria: [
-      { texto: "La organización de láminas y numeración debe seguir el estándar de nomenclatura definido por el estudio para el proyecto.", fuente: null, verificar: true }
+      notaNorma('Los planos son parte del diseño exigible por el RETIE, no un producto accesorio del modelo: deben permitir construir e inspeccionar la instalación sin volver al archivo de Revit.', REF.REQUIEREN_DISENO),
+      notaCriterio('Ubicar las vistas en el rótulo con una escala y un recorte definidos desde el inicio evita rehacer la composición de todas las láminas cuando el proyecto crece.'),
     ],
     tipsRevit: [
       "Usa 'Duplicar vista > Duplicar' en lugar de 'Duplicar con detallado' cuando no necesites anotaciones independientes.",
@@ -52,6 +56,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ["PB-01-01", "PB-02-16"],
     guiaIds: ["M3.1", "M5.1"],
     descripcion: "Elaborar el documento de memoria descriptiva que resume el alcance, los criterios de diseño, las cargas consideradas y los sistemas eléctricos proyectados, sirviendo como base para las memorias específicas posteriores (RETIE, especificaciones técnicas).",
@@ -77,7 +83,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "El documento incluye el alcance y la clasificación del proyecto"
     ],
     notasIngenieria: [
-      { texto: "Los factores de demanda y simultaneidad utilizados deben quedar documentados con su criterio de origen, no solo con el valor numérico.", fuente: null, verificar: true }
+      notaNorma('La memoria descriptiva hace parte de la documentación de diseño que el RETIE exige para las instalaciones que requieren diseño, y debe ser coherente con los planos y con el modelo.', REF.REQUIEREN_DISENO),
+      notaNorma('La memoria debe estar respaldada por el profesional competente responsable del diseño; el modelador redacta el soporte documental, no asume la responsabilidad técnica.', REF.RESPONSABILIDAD_DISENADOR),
     ],
     tipsRevit: [
       "Genera una tabla de planificación de cargas por tablero con el comando 'Tabla de planificación/cuantificaciones' filtrada por categoría 'Tableros eléctricos' para alimentar la memoria con datos reales del modelo.",
@@ -93,6 +100,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 12,
+    prioridad: 'Alta',
     dependeDe: ["PB-02-09", "PB-02-02"],
     guiaIds: ["M3.6", "M5.3"],
     descripcion: "Construir los diagramas unifilares que representan la topología de la red eléctrica del proyecto (acometida de media tensión, subestación, distribución en baja tensión y tableros), reflejando los circuitos definidos en el modelo.",
@@ -118,7 +127,9 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "El diagrama incluye la acometida de media tensión hasta los tableros finales"
     ],
     notasIngenieria: [
-      { texto: "Revit no genera diagramas unifilares de forma automática a partir de la topología eléctrica; el diagrama se construye manualmente sobre los datos extraídos del modelo.", fuente: null, verificar: true }
+      notaNormaVerificar('El diagrama unifilar debe reflejar las protecciones realmente seleccionadas, con su capacidad nominal y su capacidad de corte, y ser coherente con el estudio de coordinación de protecciones del proyecto.', REF.SOBRECORRIENTES),
+      notaNorma('Los tableros y celdas representados en el unifilar deben corresponder a equipos que cumplan los requisitos de instalación del RETIE, incluida su identificación y rotulación.', REF.CELDAS_TABLEROS),
+      notaCriterio('Revit no genera diagramas unifilares de forma automática a partir de la topología eléctrica; el diagrama se construye manualmente sobre los datos extraídos del modelo.'),
     ],
     tipsRevit: [
       "Usa una 'Vista de dibujo' (Drafting View) para el unifilar, ya que Revit no tiene una herramienta nativa de diagramas de una línea.",
@@ -135,6 +146,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Modelado",
     disciplina: "Eléctrica",
     dificultad: 2,
+    horasEstimadas: 6,
+    prioridad: 'Media',
     dependeDe: ["PB-02-15"],
     guiaIds: ["M2.5", "M3.1"],
     descripcion: "Modelar los elementos eléctricos ubicados en las cajas de escalera (iluminación, tomas, salidas de emergencia) y generar las vistas de planta y corte necesarias para documentarlas.",
@@ -160,7 +173,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "Las vistas nuevas tienen asignada la plantilla de vista del estudio"
     ],
     notasIngenieria: [
-      { texto: "La iluminación de escaleras suele considerarse circuito de emergencia; validar con el diseño de iluminación cuál circuito le corresponde antes de cerrar el modelado.", fuente: null, verificar: true }
+      notaNorma('La iluminación de escaleras y rutas de evacuación pertenece a los sistemas de emergencia y debe ser independiente del alumbrado normal.', REF.SISTEMAS_EMERGENCIA),
+      notaNormaVerificar('Los niveles de iluminancia y la autonomía exigidos al alumbrado de emergencia los fija el RETILAP; confirmar los valores aplicables a escaleras y circulaciones antes de cerrar el diseño.', REF.ILUM_EMERGENCIA),
     ],
     tipsRevit: [
       "Ajusta el 'Rango de vista' (View Range) de la planta para que el corte superior incluya los descansos intermedios de la escalera.",
@@ -177,6 +191,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Coordinación MEP",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 5,
+    prioridad: 'Media',
     dependeDe: ["PB-04-01"],
     guiaIds: ["M6.1", "M6.5"],
     descripcion: "Revisar las especificaciones técnicas de los equipos hidrosanitarios (bombas, equipos de presión, calentadores) para confirmar que sus requerimientos eléctricos (potencia, tensión, protecciones) están correctamente reflejados en el diseño eléctrico.",
@@ -202,7 +218,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "No quedan inconsistencias abiertas entre especificación hidrosanitaria y modelo eléctrico"
     ],
     notasIngenieria: [
-      { texto: "Los equipos de presión y bombas suelen requerir arrancador o variador; confirmar con la especificación del fabricante si el circuito debe protegerse distinto a una carga resistiva.", fuente: null, verificar: true }
+      notaNorma('Los puntos donde una red hidrosanitaria coincide con salidas o tableros eléctricos exigen protección contra falla de aislamiento y separación adecuada; la coordinación entre disciplinas es la que evita ese riesgo.', REF.PROTECCION_AISLAMIENTO),
+      notaNorma('Ninguna tubería de otra disciplina puede invadir el espacio de trabajo frente a tableros ni el interior de cuartos técnicos eléctricos.', REF.ESPACIOS_MONTAJE),
     ],
     tipsRevit: [
       "Usa 'Copiar/Monitorear' para vincular la ubicación de los equipos hidrosanitarios del modelo de esa disciplina.",
@@ -219,6 +236,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 4,
+    horasEstimadas: 12,
+    prioridad: 'Alta',
     dependeDe: ["PB-03-02", "PB-02-08"],
     guiaIds: ["M5.1", "M5.6"],
     descripcion: "Elaborar la memoria técnica que sustenta el cumplimiento del Reglamento Técnico de Instalaciones Eléctricas (RETIE) por parte del proyecto, cubriendo los aspectos de diseño, protecciones y puesta a tierra exigidos.",
@@ -244,8 +263,9 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "El documento es consistente con los datos del modelo eléctrico"
     ],
     notasIngenieria: [
-      { texto: "La memoria RETIE debe demostrar el cumplimiento del Reglamento Técnico de Instalaciones Eléctricas vigente en Colombia; el articulado específico aplicable a cada sistema debe confirmarlo el ingeniero certificador RETIE del proyecto.", fuente: "RETIE", verificar: false },
-      { texto: "No se debe citar un número de artículo o tabla RETIE específico en la memoria sin confirmarlo contra el texto vigente del reglamento.", fuente: null, verificar: true }
+      notaNorma('La demostración de conformidad de la instalación se hace mediante declaración de cumplimiento del constructor y, cuando se exige certificación plena, con el dictamen de inspección de un organismo acreditado por la ONAC.', REF.DECLARACION_CUMPLIMIENTO),
+      notaNorma('El RETIE define qué instalaciones requieren certificación plena; determinarlo antes de redactar la memoria evita preparar un soporte documental insuficiente para el trámite.', REF.CERTIFICACION_PLENA),
+      notaNormaVerificar('No se debe citar un número de artículo o tabla del RETIE en la memoria sin confirmarlo contra el texto vigente. El reglamento fue reexpedido por la Resolución 40284 de 2026 y su numeración cambió respecto a versiones anteriores.', REF.REQUIEREN_DISENO),
     ],
     tipsRevit: [
       "Genera desde Revit las tablas de planificación de tableros y de la malla de puesta a tierra para anexarlas como soporte de la memoria, evitando transcripción manual de datos.",
@@ -261,6 +281,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ["PB-03-02"],
     guiaIds: ["M3.1", "M9.3"],
     descripcion: "Elaborar el documento de especificaciones técnicas que define los materiales, equipos y criterios de instalación exigidos para la ejecución del proyecto eléctrico, en consistencia con lo modelado.",
@@ -285,7 +307,9 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "El documento fue revisado por el ingeniero responsable antes de su entrega"
     ],
     notasIngenieria: [
-      { texto: "Las especificaciones técnicas deben ser consistentes con las familias realmente cargadas en el modelo para evitar contradicciones entre plano y documento.", fuente: null, verificar: true }
+      notaNorma('Los productos objeto del RETIE deben contar con certificado de conformidad o declaración de conformidad del proveedor; la especificación técnica debe exigirlo explícitamente y no solo describir el producto.', REF.PRODUCTOS_RETIE),
+      notaNorma('Las normas técnicas aplicables a cada producto e instalación las remite el propio RETIE; la especificación debe citar la norma vigente y no una edición derogada.', REF.NORMAS_TECNICAS),
+      notaCriterio('Las especificaciones técnicas deben ser consistentes con las familias realmente cargadas en el modelo para evitar contradicciones entre plano y documento.'),
     ],
     tipsRevit: [
       "Usa el 'Administrador de tipos' para revisar de forma rápida todas las variantes de familia usadas en el proyecto antes de redactar las especificaciones.",
@@ -301,6 +325,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 2,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ["PB-03-01"],
     guiaIds: ["M3.1", "M3.2"],
     descripcion: "Producir el conjunto de planos de planta eléctricos generales del proyecto, consolidando en las láminas ya preparadas la información modelada de cada sistema.",
@@ -326,7 +352,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "Los filtros de grafismo diferencian correctamente cada sistema representado"
     ],
     notasIngenieria: [
-      { texto: "La escala y el nivel de detalle mostrado deben ser consistentes con el uso previsto del plano (coordinación, construcción o entrega a operador de red).", fuente: null, verificar: true }
+      notaNorma('La planimetría es parte del diseño exigible y debe permitir construir la instalación tal como fue concebida; una vista bonita pero sin cotas ni referencias no cumple esa función.', REF.REQUIEREN_DISENO),
+      notaCriterio('La escala y el nivel de detalle mostrado deben ser consistentes con el uso previsto del plano (coordinación, construcción o entrega a operador de red).'),
     ],
     tipsRevit: [
       "Usa 'Filtros de vista' (View Filters) para colorear por sistema eléctrico sin duplicar vistas.",
@@ -343,6 +370,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Alta',
     dependeDe: ["PB-02-11"],
     guiaIds: ["M5.6", "M3.1"],
     descripcion: "Documentar en plano el sistema de apantallamiento (pararrayos y bajantes) modelado en el proyecto, mostrando su ubicación en planta y su relación con la malla de puesta a tierra.",
@@ -368,7 +397,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "La simbología usada coincide con la leyenda del proyecto"
     ],
     notasIngenieria: [
-      { texto: "El sistema de apantallamiento debe representarse de forma consistente con el método de cálculo usado para definir el radio de protección.", fuente: null, verificar: true }
+      notaNorma('El sistema de protección contra rayos tiene requisitos propios en el RETIE; el plano debe mostrar captadores, bajantes y su conexión al sistema de puesta a tierra como un conjunto, no como elementos sueltos.', REF.PROTECCION_RAYOS),
+      notaCriterio('El sistema de apantallamiento debe representarse de forma consistente con el método de cálculo usado para definir el radio de protección.'),
     ],
     tipsRevit: [
       "Usa un 'Callout' sobre la vista de cubierta para aislar y ampliar la zona del pararrayos sin crear una vista independiente.",
@@ -384,6 +414,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 4,
+    horasEstimadas: 8,
+    prioridad: 'Media',
     dependeDe: ["PB-02-11", "PB-03-09"],
     guiaIds: ["M5.6", "M3.4"],
     descripcion: "Documentar gráficamente la aplicación del método electrogeométrico (esfera rodante) usado para definir la zona de protección del sistema de apantallamiento del proyecto.",
@@ -409,7 +441,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "El plano referencia el plano de apantallamiento correspondiente"
     ],
     notasIngenieria: [
-      { texto: "El método electrogeométrico (esfera rodante) es una metodología reconocida para el diseño de sistemas de protección contra rayos; el radio a usar depende del nivel de protección definido para el proyecto y debe confirmarlo el diseñador de apantallamiento.", fuente: null, verificar: true }
+      notaNormaVerificar('El radio de la esfera rodante depende del nivel de protección resultante de la evaluación de riesgo del proyecto. El plano documenta el método, pero el valor proviene del estudio, no del dibujo.', REF.PROTECCION_RAYOS),
     ],
     tipsRevit: [
       "Dibuja la esfera con una familia genérica de masa o con un arco de detalle en una 'Vista de dibujo' (Drafting View), ya que Revit no tiene una herramienta paramétrica para el método de la esfera rodante.",
@@ -425,6 +457,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Media',
     dependeDe: ["PB-03-09"],
     guiaIds: ["M3.4", "M5.6"],
     descripcion: "Documentar los detalles constructivos del sistema de apantallamiento (fijación de la punta captadora, bajantes, cajas de inspección y conexión a la malla de puesta a tierra) requeridos para su ejecución en obra.",
@@ -450,7 +484,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "Los detalles son consistentes con los componentes modelados"
     ],
     notasIngenieria: [
-      { texto: "Los detalles de conexión a la malla de puesta a tierra deben ser consistentes con el tipo de conector y material especificado para el sistema.", fuente: null, verificar: true }
+      notaNorma('Los detalles de conexión del sistema de protección contra rayos deben ser coherentes con los componentes admitidos para el sistema de puesta a tierra, incluidos conectores y materiales.', REF.SPT_COMPONENTES),
+      notaCriterio('Los detalles de conexión a la malla de puesta a tierra deben ser consistentes con el tipo de conector y material especificado para el sistema.'),
     ],
     tipsRevit: [
       "Usa 'Callout' sobre la vista de apantallamiento para generar cada detalle directamente enlazado a la vista de origen.",
@@ -466,6 +501,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ["PB-02-02"],
     guiaIds: ["M5.2", "M3.1"],
     descripcion: "Documentar en planta la red de baja tensión modelada, desde la subestación o punto de transformación hasta los tableros de distribución, mostrando trazados y canalizaciones.",
@@ -491,7 +528,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "La lámina incluye la leyenda de simbología correspondiente"
     ],
     notasIngenieria: [
-      { texto: "Los calibres y tipos de canalización mostrados en plano deben coincidir con los definidos en el cálculo de circuitos, no con valores genéricos de plantilla.", fuente: null, verificar: true }
+      notaNorma('El plano de baja tensión debe reflejar las protecciones de cada alimentador y su coordinación; es el documento que usa el inspector para contrastar lo construido contra lo diseñado.', REF.SOBRECORRIENTES),
+      notaCriterio('Los calibres y tipos de canalización mostrados en plano deben coincidir con los definidos en el cálculo de circuitos, no con valores genéricos de plantilla.'),
     ],
     tipsRevit: [
       "Usa un 'Filtro de vista' por parámetro de sistema eléctrico para resaltar únicamente los conductores de baja tensión en la lámina.",
@@ -507,6 +545,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Media',
     dependeDe: ["PB-03-12"],
     guiaIds: ["M5.2", "M3.4"],
     descripcion: "Documentar el desarrollo vertical y una vista isométrica de la red de baja tensión, mostrando cómo se distribuye entre niveles hasta los tableros finales.",
@@ -532,7 +572,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "Ambas vistas están ubicadas en la misma lámina con su leyenda"
     ],
     notasIngenieria: [
-      { texto: "El desarrollo vertical debe representar el recorrido real de los conductores dentro del ducto, no una simplificación esquemática que no coincida con el modelo.", fuente: null, verificar: true }
+      notaNormaVerificar('El isométrico debe mostrar los pasos de losa y sus sellos cortafuego, y las secciones de canalización deben corresponder al porcentaje de ocupación calculado.', REF.CANALIZACIONES),
     ],
     tipsRevit: [
       "Usa 'Vista 3D aislada' con 'Ocultar categorías no relacionadas' para dejar visible solo el sistema de baja tensión en la vista isométrica.",
@@ -548,6 +588,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 10,
+    prioridad: 'Alta',
     dependeDe: ["PB-02-12", "PB-02-09"],
     guiaIds: ["M3.6", "M5.5"],
     descripcion: "Documentar en plano la iluminación y los tomacorrientes de cada tipología de apartamento, incluyendo el cuadro de cargas del tablero de vivienda y el detalle ampliado de la cocina u otra zona especial que lo requiera.",
@@ -573,7 +615,9 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "Los circuitos mostrados en el detalle coinciden con los del cuadro de cargas"
     ],
     notasIngenieria: [
-      { texto: "La zona de cocina suele requerir circuitos dedicados para electrodomésticos de alta demanda; confirmar con el diseño de cargas cuáles puntos deben quedar en circuito independiente antes de cerrar el plano.", fuente: null, verificar: true }
+      notaNormaVerificar('La zona de cocina suele requerir circuitos dedicados para electrodomesticos de alta demanda; confirmar con el diseño de cargas cuáles puntos deben quedar en circuito independiente antes de cerrar el plano.', REF.INSTALACIONES_BASICAS),
+      notaNorma('Las tomas de cocina, zonas de lavado y baños requieren protección contra falla de aislamiento; el cuadro de cargas debe evidenciar qué circuitos la llevan.', REF.PROTECCION_AISLAMIENTO),
+      notaNorma('Las alturas de montaje y el grado de protección de las tomas representadas deben corresponder a los requisitos del artículo de clavijas y tomacorrientes.', REF.TOMACORRIENTES),
     ],
     tipsRevit: [
       "Inserta el cuadro de cargas con 'Editar tabla de tablero eléctrico' (Edit Panel Schedule) y colócalo en la lámina como una vista de tabla de tablero.",
@@ -589,6 +633,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Media',
     dependeDe: ["PB-02-04"],
     guiaIds: ["M5.2", "M3.1"],
     descripcion: "Documentar en plano la red eléctrica que alimenta las áreas de servicios comunes del proyecto (salón social, portería, cuartos técnicos, zonas exteriores comunes), a partir de lo modelado.",
@@ -614,7 +660,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "La lámina incluye la leyenda de simbología de servicios comunes"
     ],
     notasIngenieria: [
-      { texto: "Las áreas de servicios comunes suelen alimentarse de un tablero general distinto al de las viviendas; verificar que la separación de circuitos en plano sea consistente con esa distribución.", fuente: null, verificar: true }
+      notaNorma('Los tableros de zonas comunes accesibles al público tienen requisitos de accesibilidad restringida que el plano debe reflejar en su ubicación y en el detalle del recinto.', REF.TABLEROS_USO_PUBLICO),
+      notaCriterio('Las áreas de servicios comunes suelen alimentarse de un tablero general distinto al de las viviendas; verificar que la separación de circuitos en plano sea consistente con esa distribución.'),
     ],
     tipsRevit: [
       "Usa 'Filtros de vista' para diferenciar el sistema de servicios comunes de los circuitos de vivienda en la misma planta.",
@@ -630,6 +677,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Alta',
     dependeDe: ["PB-02-05", "PB-03-04"],
     guiaIds: ["M5.4", "M3.1"],
     descripcion: "Documentar en plano la iluminación del punto fijo del proyecto (caja de escaleras y circulaciones verticales comunes), incluyendo circuitos de emergencia cuando apliquen.",
@@ -655,7 +704,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "La lámina incluye la leyenda de simbología de iluminación"
     ],
     notasIngenieria: [
-      { texto: "La iluminación de circulaciones verticales comunes suele requerir respaldo de emergencia; confirmar con el diseño de iluminación cuáles luminarias deben quedar en ese circuito antes de cerrar el plano.", fuente: null, verificar: true }
+      notaNorma('La iluminación de circulaciones verticales comunes forma parte de la ruta de evacuación y debe quedar respaldada por el sistema de emergencia, independiente del alumbrado normal.', REF.SISTEMAS_EMERGENCIA),
+      notaNormaVerificar('Los niveles de iluminancia y la uniformidad exigidos al alumbrado de emergencia en rutas de evacuación los fija el RETILAP; confirmar los valores antes de cerrar el plano.', REF.ILUM_EMERGENCIA),
     ],
     tipsRevit: [
       "Reutiliza la vista de corte creada para la tarea de modelado del punto fijo en lugar de generar una nueva, para mantener consistencia entre modelado y documentación.",
@@ -671,6 +721,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Media',
     dependeDe: ["PB-03-04", "PB-02-05"],
     guiaIds: ["M3.4", "M5.4"],
     descripcion: "Documentar los detalles constructivos de las instalaciones eléctricas asociadas a escaleras y ascensores (foso de ascensor, cuarto de máquinas, tomas de mantenimiento) requeridos para su ejecución.",
@@ -696,7 +748,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "Las referencias de detalle en los planos generales apuntan a la lámina correcta"
     ],
     notasIngenieria: [
-      { texto: "La iluminación y tomas del foso de ascensor suelen tener requisitos particulares de montaje del proveedor del equipo; confirmar contra la ficha técnica del ascensor antes de cerrar el detalle.", fuente: null, verificar: true }
+      notaNorma('Ascensores, escaleras y andenes móviles son equipos especiales con requisitos propios de instalación eléctrica, medios de desconexión e iluminación de foso y cuarto de máquinas.', REF.ASCENSORES),
+      notaCriterio('La iluminación y tomas del foso de ascensor suelen tener requisitos particulares de montaje del proveedor del equipo; confirmar contra la ficha técnica del ascensor antes de cerrar el detalle.'),
     ],
     tipsRevit: [
       "Usa 'Callout' sobre la vista de sección del foso de ascensor para generar el detalle enlazado directamente al modelo.",
@@ -712,6 +765,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ["PB-02-05"],
     guiaIds: ["M5.4", "M3.1"],
     descripcion: "Documentar en plano los niveles de iluminancia calculados para las áreas del proyecto, incorporando los resultados del estudio fotométrico sobre las vistas de planta correspondientes.",
@@ -737,7 +792,9 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "La lámina referencia el método o software usado para el cálculo"
     ],
     notasIngenieria: [
-      { texto: "Revit no calcula niveles fotométricos con precisión de estudio lumínico; los valores deben provenir de un software especializado externo y solo documentarse sobre el plano.", fuente: null, verificar: true }
+      notaNormaVerificar('Los niveles de iluminancia, la uniformidad, el índice de reproducción cromática y el deslumbramiento exigidos por espacio los fija el RETILAP según la tarea visual; el plano documenta el resultado, no lo define.', REF.ILUM_REQUISITOS_INTERIOR),
+      notaNorma('El RETILAP admite expresamente la información fotométrica contenida en familias bajo metodología BIM, además de los formatos de matriz de intensidades como .ies: la fotometría de la familia de Revit es un insumo válido si proviene del fabricante.', REF.ILUM_FOTOMETRIAS),
+      notaCriterio('Revit no calcula niveles fotométricos con precisión de estudio lumínico; los valores deben provenir de un software especializado externo y solo documentarse sobre el plano.'),
     ],
     tipsRevit: [
       "Importa los resultados del estudio fotométrico como imagen de fondo (Image) sobre la vista de planta en lugar de intentar recalcularlos dentro de Revit.",
@@ -753,6 +810,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Media',
     dependeDe: ["PB-02-04"],
     guiaIds: ["M5.2", "M6.1"],
     descripcion: "Documentar en plano las redes eléctricas generales de las zonas comunes que alimentan equipos de presión, eyectores y otros equipos coordinados con la disciplina de HVAC, incluyendo su relación con las zonas arquitectónicas donde se ubican.",
@@ -778,7 +837,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "La lámina incluye la leyenda de simbología correspondiente"
     ],
     notasIngenieria: [
-      { texto: "Los eyectores y equipos de presión coordinados con HVAC suelen requerir confirmación de potencia final con el proveedor del equipo antes del cierre de circuitos.", fuente: null, verificar: true }
+      notaNorma('Los motores y grupos electrógenos tienen requisitos de instalación y protección propios en el RETIE, distintos de los de una carga resistiva.', REF.MOTORES_GRUPOS),
+      notaCriterio('Los eyectores y equipos de presión coordinados con HVAC suelen requerir confirmación de potencia final con el proveedor del equipo antes del cierre de circuitos.'),
     ],
     tipsRevit: [
       "Usa 'Copiar/Monitorear' para mantener sincronizada la ubicación de los equipos del modelo de HVAC vinculado.",
@@ -794,6 +854,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     categoria: "Documentación",
     disciplina: "Eléctrica",
     dificultad: 2,
+    horasEstimadas: 6,
+    prioridad: 'Media',
     dependeDe: [],
     guiaIds: ["M5.4", "M3.1"],
     descripcion: "Documentar en plano el sistema de alumbrado exterior del proyecto (vías internas, zonas comunes exteriores, fachadas), mostrando circuitos, canalizaciones y tablero de control.",
@@ -819,7 +881,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
       "La lámina incluye la leyenda de simbología de alumbrado exterior"
     ],
     notasIngenieria: [
-      { texto: "El control del alumbrado exterior suele requerir fotocelda o temporizador; verificar con el diseño cuál método de control aplica antes de cerrar la anotación en plano.", fuente: null, verificar: true }
+      notaNormaVerificar('Los requisitos de iluminación de grandes áreas exteriores, incluidos los niveles y el control de la contaminación lumínica, los fija el RETILAP; confirmarlos antes de cerrar el plano.', REF.ILUM_EXTERIOR),
+      notaNorma('Las redes eléctricas que alimentan el alumbrado exterior deben cumplir los requisitos generales de redes de iluminación del RETIE.', REF.REDES_ILUMINACION),
     ],
     tipsRevit: [
       "Usa 'Filtros de vista' para diferenciar el alumbrado exterior del resto de sistemas eléctricos en la planta general.",

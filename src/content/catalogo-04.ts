@@ -1,3 +1,4 @@
+import { REF, notaNorma, notaNormaVerificar } from './normas';
 import type { TareaCatalogo } from '../types';
 
 export const CATALOGO_04: TareaCatalogo[] = [
@@ -10,6 +11,8 @@ export const CATALOGO_04: TareaCatalogo[] = [
     categoria: 'Coordinación MEP',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 8,
+    prioridad: 'Alta',
     dependeDe: ['PB-01-08', 'PB-02-14'],
     guiaIds: ['M6.1', 'M6.2'],
     descripcion:
@@ -40,18 +43,8 @@ export const CATALOGO_04: TareaCatalogo[] = [
       'Cada informe exportado contiene el ID de elemento y la ubicación de cada interferencia detectada.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'Las tolerancias de holgura mínima entre elementos de distintas disciplinas (por ejemplo, distancia libre entre bandeja eléctrica y ducto de HVAC) son criterios definidos por el proyecto o el manual de coordinación del estudio, no un valor normativo fijo.',
-        fuente: null,
-        verificar: true,
-      },
-      {
-        texto:
-          'La periodicidad de las rondas de coordinación (semanal, quincenal, por hito) es un acuerdo del equipo de proyecto y no está fijada por una norma técnica.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('La detección de interferencias no termina en el choque geométrico: el espacio de trabajo frente a tableros y los pasillos de operación deben quedar libres, y solo se detectan si se modelan como sólidos y se incluyen en la comprobación.', REF.ESPACIOS_MONTAJE),
+      notaNormaVerificar('Las distancias de seguridad a partes energizadas son un requisito normativo, no una holgura de coordinación; verificar el valor aplicable al nivel de tensión de cada zona.', REF.DISTANCIAS_SEGURIDAD),
     ],
     tipsRevit: [
       'El comando "Verificación de interferencias" está en la pestaña Colaborar, grupo Coordinar; el botón "Mostrar" del cuadro de resultados aísla cada par de elementos en interferencia en la vista activa.',
@@ -70,6 +63,8 @@ export const CATALOGO_04: TareaCatalogo[] = [
     categoria: 'Coordinación MEP',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 6,
+    prioridad: 'Alta',
     dependeDe: ['PB-04-01'],
     guiaIds: ['M6.3', 'M6.4'],
     descripcion:
@@ -101,18 +96,7 @@ export const CATALOGO_04: TareaCatalogo[] = [
       'Ninguna incidencia de la ronda queda en estado "sin revisar" al momento de cerrar la ronda de coordinación.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'Los criterios de severidad (crítico, mayor, menor) y el porcentaje de conflictos abiertos aceptable para cerrar una ronda de coordinación son acuerdos del proyecto o del estudio, no están definidos por RETIE ni por una norma técnica.',
-        fuente: null,
-        verificar: true,
-      },
-      {
-        texto:
-          'El tiempo máximo permitido entre la detección de un conflicto y su corrección (SLA de coordinación) es un acuerdo interno del equipo de proyecto, no un requisito normativo.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Un conflicto cerrado moviendo la instalación eléctrica puede alterar el diseño; cuando el cambio afecta criterios técnicos debe validarlo el diseñador responsable y no resolverse solo en el modelo.', REF.RESPONSABILIDAD_DISENADOR),
     ],
     tipsRevit: [
       'Usa el "ID de elemento" que entrega el informe de Verificación de interferencias (clic derecho > "Seleccionar por ID") para ubicar en el modelo el elemento eléctrico exacto reportado en la incidencia.',

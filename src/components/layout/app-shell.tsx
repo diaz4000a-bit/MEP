@@ -78,7 +78,7 @@ export function AppShell({
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
 
-      <Toaster theme="dark" />
+      <Toaster theme="light" />
     </div>
   );
 }

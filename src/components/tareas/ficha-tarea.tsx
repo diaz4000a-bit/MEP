@@ -277,12 +277,27 @@ export function FichaTarea({
                 {contenido.notasIngenieria.map((n, i) => (
                   <li key={i} className="rounded-lg border border-border p-2.5 text-sm">
                     <p>{n.texto}</p>
-                    {n.verificar || !n.fuente ? (
+                    {n.fuente && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Fuente:{" "}
+                        {n.url ? (
+                          <a
+                            href={n.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline underline-offset-2 hover:text-foreground"
+                          >
+                            {n.fuente} ↗
+                          </a>
+                        ) : (
+                          n.fuente
+                        )}
+                      </p>
+                    )}
+                    {(n.verificar || !n.fuente) && (
                       <p className="mt-1 text-xs font-medium text-prioridad-media">
                         ⚠ Verificar contra el criterio de diseño del proyecto
                       </p>
-                    ) : (
-                      <p className="mt-1 text-xs text-muted-foreground">Fuente: {n.fuente}</p>
                     )}
                   </li>
                 ))}

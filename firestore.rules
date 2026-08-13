@@ -67,6 +67,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /catalogoOverrides/{plantillaId} {
+      // Overlay editable de la plantilla base (/plantilla, solo admin). Ningún componente
+      // cliente lee esta colección directo (todo pasa por catalogoVigente() en el servidor),
+      // así que el read también queda restringido a admin: de lo contrario cualquier usuario
+      // activo podría consultarla desde la consola del navegador y ver tareas ocultas/borrador
+      // y el uid del admin que las editó.
+      allow read:  if esAdmin();
+      allow write: if false;
+    }
+
     match /horarios/{uid} {
       allow read:  if activo() && (yo() == uid || esGestor());
       // El horario es la línea base contra la que se mide el cumplimiento; lo escribe

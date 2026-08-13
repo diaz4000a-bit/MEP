@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Seccion, SeccionLista } from "@/components/contenido/seccion-card";
 import { MarcarLeida } from "@/components/guia/marcar-leida";
-import { CATALOGO_TAREAS } from "@/content/catalogo-tareas";
 import { GUIA_MODULOS, LECCIONES } from "@/content/guia";
 import { exigirUsuario } from "@/lib/auth/sesion";
+import { catalogoVigente } from "@/lib/catalogo-vigente";
 
 const TODAS_LECCIONES = GUIA_MODULOS.flatMap((m) => m.lecciones.map((l) => ({ ...l, moduloId: m.id })));
 
@@ -26,7 +26,8 @@ export default async function LeccionPage({
   if (!mod || !leccion || !mod.lecciones.some((l) => l.id === leccionId)) notFound();
 
   const leida = (usuario.guiaLeidas ?? []).includes(leccion.id);
-  const tareasRelacionadas = CATALOGO_TAREAS.filter((t) => t.guiaIds.includes(leccion.id));
+  const { lista: catalogo } = await catalogoVigente();
+  const tareasRelacionadas = catalogo.filter((t) => t.guiaIds.includes(leccion.id));
 
   const idx = TODAS_LECCIONES.findIndex((l) => l.id === leccion.id);
   const anterior = idx > 0 ? TODAS_LECCIONES[idx - 1] : null;

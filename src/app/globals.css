@@ -92,9 +92,9 @@
 }
 
 /*
- * Paleta de la v1 (identidad visual conservada, ver PLAN-MEJORAS.md §11.1).
- * La app es siempre oscura — la v1 nunca tuvo modo claro — por eso estos
- * mismos valores se fuerzan también sobre `:root` más abajo.
+ * Paleta oscura de la v1 (identidad visual conservada, ver PLAN-MEJORAS.md §11.1).
+ * Se aplica solo cuando el elemento raíz tiene la clase `.dark`.
+ * El modo claro (`:root` arriba) es el default de la app.
  */
 .dark {
   --background: #0f1117;       /* --bg-primary v1 */

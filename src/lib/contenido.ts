@@ -1,4 +1,4 @@
-import { CATALOGO_TAREAS_MAP } from "@/content/catalogo-tareas";
+import { catalogoVigente } from "@/lib/catalogo-vigente";
 import type { NotaIngenieria, Tarea } from "@/types";
 
 export interface ContenidoTarea {
@@ -12,9 +12,10 @@ export interface ContenidoTarea {
   tipsRevit: string[];
 }
 
-/** El override en la tarea (Firestore) siempre gana sobre el contenido del catálogo. */
-export function contenidoTarea(t: Tarea): ContenidoTarea {
-  const base = t.plantillaId ? CATALOGO_TAREAS_MAP.get(t.plantillaId) : undefined;
+/** El override en la tarea (Firestore) siempre gana sobre el contenido del catálogo vigente. */
+export async function contenidoTarea(t: Tarea): Promise<ContenidoTarea> {
+  const { mapa } = await catalogoVigente();
+  const base = t.plantillaId ? mapa.get(t.plantillaId) : undefined;
   return {
     descripcion: t.descripcion ?? base?.descripcion ?? "",
     objetivo: t.objetivo ?? base?.objetivo ?? "",

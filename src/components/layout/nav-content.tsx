@@ -30,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/jornadas", label: "Jornadas", Icon: icono("ti-clock-hour-4") },
   { href: "/guia", label: "Guía", Icon: icono("ti-school") },
   { href: "/equipo", label: "Equipo", Icon: icono("ti-users") },
+  { href: "/plantilla", label: "Plantilla", Icon: icono("ti-checklist"), soloRoles: ["admin"] },
   { href: "/usuarios", label: "Usuarios", Icon: icono("ti-user-cog"), soloRoles: ["admin"] },
 ];
 

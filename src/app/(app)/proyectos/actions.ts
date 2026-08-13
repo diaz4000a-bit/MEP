@@ -2,11 +2,11 @@
 
 import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
-import { CATALOGO_TAREAS } from "@/content/catalogo-tareas";
 import { CATEGORIAS } from "@/content/categorias";
 import { GRUPOS } from "@/content/grupos";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
+import { catalogoVigente } from "@/lib/catalogo-vigente";
 import { adminDb } from "@/lib/firebase/admin";
 import { inferirGrupoYSubgrupo, inferirPlantillaId } from "@/lib/importar";
 import { computeAvance } from "@/lib/tareas";
@@ -73,14 +73,16 @@ export async function crearProyectoDesdeplantilla(datos: DatosProyecto) {
   const usuario = await exigirUsuario();
   await exigirPermiso(usuario, "crearProyecto");
 
+  const { lista: catalogo } = await catalogoVigente();
+
   const ref = adminDb.collection("proyectos").doc();
   const ahora = Date.now();
   const proyecto = proyectoBase(ref.id, datos, ahora);
-  proyecto.totalTareas = CATALOGO_TAREAS.length;
+  proyecto.totalTareas = catalogo.length;
 
   const batch = adminDb.batch();
   batch.set(ref, proyecto);
-  for (const c of CATALOGO_TAREAS) {
+  for (const c of catalogo) {
     const tareaRef = ref.collection("tareas").doc();
     const notasIngenieria: NotaIngenieria[] = c.notasIngenieria;
     const tarea: Tarea = {
@@ -95,13 +97,13 @@ export async function crearProyectoDesdeplantilla(datos: DatosProyecto) {
       etapa: null,
       responsableUid: null,
       responsable: "",
-      prioridad: "Media",
+      prioridad: c.prioridad,
       estado: "Sin iniciar",
       porcentaje: 0,
       fechaInicio: "",
       fechaLimite: "",
       fechaCompletada: "",
-      horasEstimadas: 0,
+      horasEstimadas: c.horasEstimadas,
       horasReales: 0,
       comentarios: "",
       bloqueadoPor: "",

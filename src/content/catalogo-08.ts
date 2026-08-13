@@ -1,3 +1,4 @@
+import { REF, notaCriterio, notaNorma } from './normas';
 import type { TareaCatalogo } from '../types';
 
 export const CATALOGO_08: TareaCatalogo[] = [
@@ -10,6 +11,8 @@ export const CATALOGO_08: TareaCatalogo[] = [
     categoria: 'Configuración BIM',
     disciplina: 'Eléctrica',
     dificultad: 5,
+    horasEstimadas: 16,
+    prioridad: 'Baja',
     dependeDe: [],
     guiaIds: ['M8.1', 'M8.2'],
     descripcion:
@@ -42,12 +45,8 @@ export const CATALOGO_08: TareaCatalogo[] = [
       'La rutina (.dyn) queda guardada en la biblioteca del estudio para reutilización posterior.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'La convención de nomenclatura y numeración de tableros y circuitos depende de los estándares internos del estudio; no existe una norma única aplicable a todos los proyectos.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Una rutina que renombra tableros y circuitos toca la identificación con la que se opera la instalación; debe respetar el esquema de rotulación exigido a celdas y tableros y no solo ser consistente consigo misma.', REF.CELDAS_TABLEROS),
+      notaCriterio('Una rutina de renombrado masivo no tiene deshacer fiable sobre un modelo central: probarla siempre sobre una copia local antes de ejecutarla en el proyecto.'),
     ],
     tipsRevit: [
       "Usa 'Dynamo Player' (pestaña Administrar) para ejecutar la rutina sin abrir el entorno completo de Dynamo, útil para que otros miembros del equipo la reutilicen.",
@@ -66,6 +65,8 @@ export const CATALOGO_08: TareaCatalogo[] = [
     categoria: 'Configuración BIM',
     disciplina: 'Eléctrica',
     dificultad: 3,
+    horasEstimadas: 12,
+    prioridad: 'Baja',
     dependeDe: ['PB-03-01'],
     guiaIds: ['M3.2', 'M8.3'],
     descripcion:
@@ -97,12 +98,8 @@ export const CATALOGO_08: TareaCatalogo[] = [
       'Los filtros aplicados muestran el color y el patrón de línea definidos en el estándar gráfico del estudio.',
     ],
     notasIngenieria: [
-      {
-        texto:
-          'Los criterios de color y grafismo por sistema son un estándar interno del estudio, no una norma técnica; deben validarse con el equipo BIM antes de adoptarse como definitivos.',
-        fuente: null,
-        verificar: true,
-      },
+      notaNorma('Las plantillas de vista son el lugar natural para fijar el código de colores de conductores y las convenciones normativas, de modo que se apliquen solas en cada proyecto nuevo.', REF.CODIGO_COLORES),
+      notaCriterio('Una biblioteca de plantillas solo se mantiene viva si tiene un responsable y un versionado; si cada proyecto la modifica libremente deja de ser un estándar.'),
     ],
     tipsRevit: [
       "Usa 'Administrar > Transferir estándares de proyecto' para copiar plantillas de vista, filtros y estilos de línea entre proyectos sin recrearlos manualmente.",
