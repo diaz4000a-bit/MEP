@@ -44,7 +44,12 @@ function bloqueValido(v: unknown): boolean {
   if (v === null) return true;
   if (typeof v !== "object") return false;
   const b = v as Record<string, unknown>;
-  return typeof b.inicio === "string" && HORA_RE.test(b.inicio) && typeof b.fin === "string" && HORA_RE.test(b.fin);
+  if (typeof b.inicio !== "string" || !HORA_RE.test(b.inicio)) return false;
+  if (typeof b.fin !== "string" || !HORA_RE.test(b.fin)) return false;
+  // Comparación lexicográfica válida porque "HH:mm" ya viene cero-rellenado. Sin esto un
+  // bloque "18:00"-"09:00" pasaba la validación y `minutosBloque` lo contaba como 0 minutos
+  // en silencio, en vez de rechazar el horario al guardarlo.
+  return b.inicio < b.fin;
 }
 
 /**

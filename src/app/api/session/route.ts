@@ -14,7 +14,12 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Solicitud inválida.' }, { status: 400 });
   }
 
-  const decoded = await adminAuth.verifyIdToken(idToken);
+  let decoded;
+  try {
+    decoded = await adminAuth.verifyIdToken(idToken);
+  } catch {
+    return Response.json({ error: 'Sesión inválida o expirada.' }, { status: 401 });
+  }
 
   // Solo se acepta un token recién emitido (< 5 min): evita reutilizar tokens viejos
   if (Date.now() - decoded.auth_time * 1000 > 5 * 60 * 1000) {

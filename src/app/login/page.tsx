@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { IconBolt } from "@tabler/icons-react";
@@ -69,6 +70,10 @@ function LoginForm() {
       const snap = await getDoc(doc(db, "usuarios", cred.user.uid));
       const datos = snap.data() as Usuario | undefined;
       if (!datos?.activo) {
+        // Sin cookie de sesión (el servidor la rechaza en /api/session) pero el SDK cliente
+        // de Firebase Auth queda igual con un usuario autenticado en memoria: cualquier otro
+        // código que lea `auth.currentUser` lo trataría como una sesión válida.
+        await signOut(auth);
         setEsperandoAprobacion(true);
         return;
       }
