@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
+  connectFirestoreEmulator,
   getFirestore, initializeFirestore,
   persistentLocalCache, persistentMultipleTabManager,
 } from 'firebase/firestore';
@@ -28,3 +29,22 @@ export const db = (() => {
     return getFirestore(app);
   }
 })();
+
+// Solo para pruebas E2E (Playwright) contra el emulador local — nunca se activa en producción,
+// que no define esta variable. `connect*Emulator` lanza si ya se conectó antes (hot reload de
+// Next en dev), de ahí el try/catch: mismo motivo que el de `db` arriba.
+if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
+  try {
+    connectAuthEmulator(auth, `http://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST}`, {
+      disableWarnings: true,
+    });
+  } catch {
+    // ya conectado (hot reload)
+  }
+  try {
+    const [host, port] = (process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST ?? '').split(':');
+    connectFirestoreEmulator(db, host, Number(port));
+  } catch {
+    // ya conectado (hot reload)
+  }
+}

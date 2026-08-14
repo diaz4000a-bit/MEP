@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:integration": "firebase emulators:exec --only firestore,auth --project demo-mep-manager \"vitest run -c vitest.integration.config.mts\"",
+    "test:e2e": "playwright test",
     "validar": "tsx scripts/validar-contenido.ts"
   },
   "dependencies": {
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
