@@ -19,10 +19,15 @@ import type { EstadoTarea, Jornada } from "@/types";
 
 const ESTADOS: EstadoTarea[] = ["Sin iniciar", "En progreso", "En revisión", "Completada", "Bloqueada"];
 
+/**
+ * `new Date(); d.setDate(...)` usa la hora local del runtime: en Vercel (UTC) el corte de
+ * "hoy" cae hasta 5 horas antes que en Bogotá, así que cerca de medianoche colombiana el
+ * rango de 90 días podía arrancar un día más tarde o más temprano según dónde corriera.
+ * Se ancla primero al día calendario de Bogotá y se resta con aritmética UTC pura.
+ */
 function hace90Dias(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 90);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const ms = Date.parse(`${fechaBogota()}T00:00:00Z`) - 90 * 86_400_000;
+  return new Date(ms).toISOString().slice(0, 10);
 }
 
 export default async function DashboardPage() {
@@ -64,8 +69,18 @@ export default async function DashboardPage() {
       ? tareas.filter((t) => t.estado === "Completada").reduce((s, t) => s + (Number(t.horasReales) || 0), 0) /
         completadas
       : null;
+  // "Tiempo de jornada / tarea completada": el numerador (minutos de jornadas cerradas) solo
+  // cubre los últimos 90 días (`jornadasSnap` está acotado a ese rango), pero el denominador
+  // usaba `completadas` SIN acotar — tareas completadas hace años inflaban el conteo sin
+  // aportar minutos al numerador, dando un promedio que no correspondía a ningún periodo real.
+  // Se acota también el denominador a los últimos 90 días, usando `fechaCompletada`.
+  const desde90 = hace90Dias();
+  const completadasUltimos90 = tareas.filter(
+    (t) => t.estado === "Completada" && t.fechaCompletada >= desde90,
+  ).length;
   const minutosJornadaTotal = jornadas.filter((j) => j.estado === "cerrada").reduce((s, j) => s + (j.duracionMin ?? 0), 0);
-  const promedioMinutosJornada = completadas > 0 ? Math.round(minutosJornadaTotal / completadas) : null;
+  const promedioMinutosJornada =
+    completadasUltimos90 > 0 ? Math.round(minutosJornadaTotal / completadasUltimos90) : null;
   const porEstado = ESTADOS.map((estado) => ({ estado, n: tareas.filter((t) => t.estado === estado).length }));
 
   // Banda 3 — Actividad y alertas

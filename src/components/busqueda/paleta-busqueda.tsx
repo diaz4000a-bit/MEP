@@ -43,30 +43,34 @@ export function PaletaBusqueda() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // El índice se pide al abrir la paleta, no en cada render de página: construirlo en el
-  // layout obligaba a leer proyectos y tareas completos en cada navegación y a enviar el
-  // índice entero al navegador aunque nadie buscara.
+  // El índice se pide cada vez que se abre la paleta, no solo la primera vez: proyectos o
+  // tareas creados después de la carga inicial no aparecían hasta recargar la página entera
+  // (el `items !== null` de antes bloqueaba cualquier recarga posterior). Los items previos
+  // se conservan mientras llega la respuesta nueva, así que no hay parpadeo a "Cargando…".
   useEffect(() => {
-    if (!open || items !== null) return;
+    if (!open) return;
     let vigente = true;
-    setError(false);
-    fetch("/api/busqueda")
-      .then((r) => {
+
+    const cargar = async () => {
+      try {
+        const r = await fetch("/api/busqueda");
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((datos: ItemBusqueda[]) => {
-        if (vigente) setItems(datos);
-      })
-      .catch(() => {
-        // Sin índice no hay búsqueda; se avisa en el diálogo en vez de dejar un
-        // "Sin resultados" que hace pensar que no hay nada creado.
+        const datos = await r.json();
+        if (vigente) {
+          setError(false);
+          setItems(datos);
+        }
+      } catch {
         if (vigente) setError(true);
-      });
+      }
+    };
+
+    cargar();
+
     return () => {
       vigente = false;
     };
-  }, [open, items]);
+  }, [open]);
 
   const ir = (href: string) => {
     setOpen(false);
