@@ -4,7 +4,7 @@ on:
   schedule:
     # 07:00 UTC ~= 02:00 hora de Bogotá — fuera de horario de trabajo del equipo.
     - cron: '0 7 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 jobs:
   e2e:
