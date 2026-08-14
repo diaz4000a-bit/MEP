@@ -10,7 +10,7 @@
     "build": "npm run validar && next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:integration": "firebase emulators:exec --only firestore,auth --project demo-mep-manager \"vitest run -c vitest.integration.config.mts\"",
     "test:e2e": "playwright test",
