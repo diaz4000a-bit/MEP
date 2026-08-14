@@ -194,7 +194,10 @@ export async function eliminarProyecto(proyectoId: string) {
   revalidatePath("/proyectos");
 }
 
-export const MAX_NOTAS_PROYECTO = 20_000;
+// No exportada: un archivo "use server" solo puede exportar funciones async — exportar
+// esta constante invalida el módulo entero para el bundle de cliente (Turbopack lo trata
+// como "sin exports", rompiendo cada Server Action que otros componentes importan de aquí).
+const MAX_NOTAS_PROYECTO = 20_000;
 
 export async function guardarNotasProyecto(proyectoId: string, notas: string) {
   const usuario = await exigirUsuario();
