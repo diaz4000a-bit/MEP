@@ -1,0 +1,46 @@
+name: E2E nightly
+
+on:
+  schedule:
+    # 07:00 UTC ~= 02:00 hora de Bogotá — fuera de horario de trabajo del equipo.
+    - cron: '0 7 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # test:e2e (playwright.config.ts) levanta su propio emulador de Firestore/Auth y su
+      # propio `next dev` con credenciales falsas — no necesita ningún secret de Firebase real,
+      # así que este workflow corre sin configurar nada en Settings > Secrets.
+      - name: Set up Java (emuladores de Firestore/Auth)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Playwright (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - run: npm run test:e2e
+
+      # Solo si algo falla: el reporte HTML y las trazas son la forma real de diagnosticar un
+      # fallo de E2E (screenshots, DOM, red) — los logs solos casi nunca alcanzan.
+      - name: Subir reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

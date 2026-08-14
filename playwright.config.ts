@@ -29,7 +29,9 @@ export default defineConfig({
   // garantía real, no una casualidad de qué datos toca cada uno.
   workers: 1,
   retries: 0,
-  reporter: [["list"]],
+  // "html" con open:"never": genera playwright-report/ (lo que sube e2e-nightly.yml como
+  // artefacto si algo falla) sin intentar abrir un navegador al terminar, que en CI no existe.
+  reporter: [["list"], ["html", { open: "never", outputFolder: "playwright-report" }]],
   use: {
     baseURL: `http://localhost:${PUERTO}`,
     trace: "retain-on-failure",
