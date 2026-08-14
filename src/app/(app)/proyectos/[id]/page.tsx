@@ -53,7 +53,12 @@ export default async function ProyectoDetallePage({ params }: { params: Promise<
         tareas={tareas}
         puedeGestionar={puede(usuario.rol, "crearProyecto")}
       />
-      <ProyectoStats proyectoId={id} notas={proyecto.notas} tareas={tareas} />
+      <ProyectoStats
+        proyectoId={id}
+        notas={proyecto.notas}
+        tareas={tareas}
+        puedeEditarNotas={puede(usuario.rol, "editarTareaPropia")}
+      />
       <ProyectoTimeline tareas={tareas} />
       <TareasTabla
         proyectoId={id}

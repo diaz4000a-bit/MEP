@@ -26,8 +26,10 @@ function filtroMultiTermino(valor: string, busqueda: string): number {
   return terminos.every((t) => objetivo.includes(t)) ? 1 : 0;
 }
 
-export function PaletaBusqueda({ items }: { items: ItemBusqueda[] }) {
+export function PaletaBusqueda() {
   const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<ItemBusqueda[] | null>(null);
+  const [error, setError] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,6 +42,31 @@ export function PaletaBusqueda({ items }: { items: ItemBusqueda[] }) {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // El índice se pide al abrir la paleta, no en cada render de página: construirlo en el
+  // layout obligaba a leer proyectos y tareas completos en cada navegación y a enviar el
+  // índice entero al navegador aunque nadie buscara.
+  useEffect(() => {
+    if (!open || items !== null) return;
+    let vigente = true;
+    setError(false);
+    fetch("/api/busqueda")
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((datos: ItemBusqueda[]) => {
+        if (vigente) setItems(datos);
+      })
+      .catch(() => {
+        // Sin índice no hay búsqueda; se avisa en el diálogo en vez de dejar un
+        // "Sin resultados" que hace pensar que no hay nada creado.
+        if (vigente) setError(true);
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [open, items]);
 
   const ir = (href: string) => {
     setOpen(false);
@@ -68,9 +95,11 @@ export function PaletaBusqueda({ items }: { items: ItemBusqueda[] }) {
         <Command filter={filtroMultiTermino}>
           <CommandInput placeholder="Buscar proyectos, zonas, tareas o lecciones…" />
           <CommandList>
-            <CommandEmpty>Sin resultados.</CommandEmpty>
+            <CommandEmpty>
+              {error ? "No se pudo cargar el índice de búsqueda." : items === null ? "Cargando…" : "Sin resultados."}
+            </CommandEmpty>
             {TIPOS.map((tipo) => {
-              const delTipo = items.filter((i) => i.tipo === tipo);
+              const delTipo = (items ?? []).filter((i) => i.tipo === tipo);
               if (delTipo.length === 0) return null;
               return (
                 <CommandGroup key={tipo} heading={tipo}>

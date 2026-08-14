@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { PaletaBusqueda } from "@/components/busqueda/paleta-busqueda";
 import { BarraJornada } from "@/components/jornada/barra-jornada";
 import { icono } from "@/lib/icons";
-import type { ItemBusqueda } from "@/lib/busqueda";
 import type { Rol } from "@/types";
 import { NavContent } from "./nav-content";
 import { UserMenu } from "./user-menu";
@@ -23,12 +22,10 @@ const IconMenu = icono("ti-menu-2");
 export function AppShell({
   usuario,
   proyectos,
-  indiceBusqueda,
   children,
 }: {
   usuario: { uid: string; nombre: string; rol: Rol };
   proyectos: ProyectoResumen[];
-  indiceBusqueda: ItemBusqueda[];
   children: React.ReactNode;
 }) {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
@@ -68,7 +65,7 @@ export function AppShell({
 
           <div className="flex-1" />
 
-          <PaletaBusqueda items={indiceBusqueda} />
+          <PaletaBusqueda />
 
           <UserMenu nombre={usuario.nombre} rol={usuario.rol} />
         </header>

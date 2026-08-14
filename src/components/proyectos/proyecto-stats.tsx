@@ -14,10 +14,13 @@ export function ProyectoStats({
   proyectoId,
   notas,
   tareas,
+  puedeEditarNotas,
 }: {
   proyectoId: string;
   notas: string;
   tareas: Tarea[];
+  /** Espeja el permiso `editarTareaPropia` que exige `guardarNotasProyecto` en servidor. */
+  puedeEditarNotas: boolean;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -31,6 +34,9 @@ export function ProyectoStats({
   );
 
   const guardarNotas = (valor: string) => {
+    // Salir del campo sin tocar nada disparaba igualmente la action; para el rol `usuario`
+    // eso era un toast de error por el simple hecho de hacer clic fuera del textarea.
+    if (valor === notas) return;
     startTransition(async () => {
       try {
         await guardarNotasProyecto(proyectoId, valor);
@@ -96,11 +102,18 @@ export function ProyectoStats({
           className="mt-2"
           rows={5}
           defaultValue={notas}
-          placeholder="Notas, pendientes de coordinación, acuerdos con el cliente..."
+          placeholder={
+            puedeEditarNotas
+              ? "Notas, pendientes de coordinación, acuerdos con el cliente..."
+              : "Sin notas"
+          }
           onBlur={(e) => guardarNotas(e.target.value)}
+          readOnly={!puedeEditarNotas}
           disabled={pending}
         />
-        <p className="mt-1.5 text-xs text-muted-foreground">Se guarda automáticamente al salir del campo.</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {puedeEditarNotas ? "Se guarda automáticamente al salir del campo." : "Solo lectura para tu rol."}
+        </p>
       </div>
     </div>
   );
