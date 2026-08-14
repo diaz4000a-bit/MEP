@@ -46,3 +46,9 @@ next-env.d.ts
 
 # graphify
 /graphify-out/
+
+# firebase emulator suite (test:integration)
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

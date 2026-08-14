@@ -29,6 +29,16 @@ jobs:
       - run: npm run lint
       - run: npm run test
 
+      # Las reglas de Firestore (firestore.rules) solo se pueden probar contra el emulador
+      # real — el Admin SDK que usa el resto de la app las salta por completo. A diferencia
+      # del Build de abajo, no necesita ningún secret de Firebase real: corre siempre.
+      - name: Set up Java (emuladores de Firestore/Auth)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm run test:integration
+
       # El build completo necesita las credenciales reales de Firebase (ver .env.example).
       # Se salta si el repo no tiene esos secrets configurados en Settings > Secrets and
       # variables > Actions; mientras tanto Vercel ya construye cada push como preview.
