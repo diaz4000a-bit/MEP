@@ -152,6 +152,39 @@ export function validarDatosTarea(entrada: unknown): DatosTarea {
   };
 }
 
+export interface DatosProyecto {
+  nombre: string;
+  cliente: string;
+  fechaInicio: string;
+  fechaEntrega: string;
+  software: string;
+}
+
+/** Normaliza y valida el payload de crear proyecto. Lanza `ErrorValidacion`. */
+export function validarDatosProyecto(entrada: unknown): DatosProyecto {
+  if (typeof entrada !== "object" || entrada === null) {
+    fallar("Los datos del proyecto no tienen el formato esperado.");
+  }
+  const d = entrada as Record<string, unknown>;
+
+  const nombre = texto(d.nombre, "nombre");
+  if (!nombre) fallar("El nombre del proyecto es obligatorio.");
+
+  const fechaInicio = fechaValida(d.fechaInicio, "fechaInicio");
+  const fechaEntrega = fechaValida(d.fechaEntrega, "fechaEntrega");
+  if (fechaInicio && fechaEntrega && fechaEntrega < fechaInicio) {
+    fallar("La fecha de entrega no puede ser anterior a la fecha de inicio.");
+  }
+
+  return {
+    nombre,
+    cliente: texto(d.cliente, "cliente"),
+    fechaInicio,
+    fechaEntrega,
+    software: texto(d.software, "software"),
+  };
+}
+
 /** Valida `estado` + `porcentaje` sueltos (acción rápida desde el tablero). */
 export function validarEstadoYPorcentaje(
   estado: unknown,

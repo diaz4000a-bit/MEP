@@ -31,6 +31,20 @@ import { TareaDialog } from "./tarea-dialog";
 
 const ESTADOS: EstadoTarea[] = ["Sin iniciar", "En progreso", "En revisión", "Completada", "Bloqueada"];
 
+/**
+ * `notasIngenieria[].url` se valida al importar (`urlSegura` en `proyectos/actions.ts`), pero
+ * documentos escritos antes de esa validación o editados a mano en Firestore pueden traer
+ * cualquier esquema. Repetir la comprobación aquí evita que un `javascript:` cuele al `href`.
+ */
+function urlHttpSegura(url: string): string | null {
+  try {
+    const u = new URL(url);
+    return u.protocol === "http:" || u.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 interface Responsable {
   label: string;
   uid: string | null;
@@ -280,9 +294,9 @@ export function FichaTarea({
                     {n.fuente && (
                       <p className="mt-1 text-xs text-muted-foreground">
                         Fuente:{" "}
-                        {n.url ? (
+                        {n.url && urlHttpSegura(n.url) ? (
                           <a
-                            href={n.url}
+                            href={urlHttpSegura(n.url)!}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="underline underline-offset-2 hover:text-foreground"

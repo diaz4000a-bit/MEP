@@ -18,6 +18,7 @@ import {
   type DatosTarea,
   sanearHistorial,
   trocear,
+  validarDatosProyecto,
   validarDatosTarea,
   validarEstadoYPorcentaje,
   validarVerificacion,
@@ -33,14 +34,7 @@ import type {
   Tarea,
   Usuario,
 } from "@/types";
-
-interface DatosProyecto {
-  nombre: string;
-  cliente: string;
-  fechaInicio: string;
-  fechaEntrega: string;
-  software: string;
-}
+import type { DatosProyecto } from "@/lib/validar";
 
 async function exigirPermiso(usuario: Usuario, accion: Parameters<typeof puede>[1]) {
   if (!puede(usuario.rol, accion)) {
@@ -68,9 +62,10 @@ function proyectoBase(id: string, datos: DatosProyecto, ahora: number): Proyecto
   };
 }
 
-export async function crearProyecto(datos: DatosProyecto) {
+export async function crearProyecto(datosCrudos: unknown) {
   const usuario = await exigirUsuario();
   await exigirPermiso(usuario, "crearProyecto");
+  const datos = validarDatosProyecto(datosCrudos);
 
   const ref = adminDb.collection("proyectos").doc();
   const ahora = Date.now();
@@ -116,9 +111,10 @@ async function eliminarProyectoCompleto(proyectoRef: FirebaseFirestore.DocumentR
   await proyectoRef.delete();
 }
 
-export async function crearProyectoDesdeplantilla(datos: DatosProyecto) {
+export async function crearProyectoDesdeplantilla(datosCrudos: unknown) {
   const usuario = await exigirUsuario();
   await exigirPermiso(usuario, "crearProyecto");
+  const datos = validarDatosProyecto(datosCrudos);
 
   const { lista: catalogo } = await catalogoVigente();
 
@@ -455,13 +451,55 @@ function numEnRango(v: unknown, min: number, max: number, fallback = 0): number 
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, Math.round(n)));
 }
-function listaDeTextos(v: unknown): string[] | null {
+function listaDeTextos(v: unknown, maxItems = 500): string[] | null {
   if (!Array.isArray(v)) return null;
-  return v.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 5000));
+  return v
+    .slice(0, maxItems)
+    .filter((x): x is string => typeof x === "string")
+    .map((x) => x.slice(0, 5000));
 }
-/** Fecha del archivo: se conserva si es 'AAAA-MM-DD', si no se descarta (nunca revienta el import). */
+/**
+ * Fecha del archivo: se conserva solo si es 'AAAA-MM-DD' Y corresponde a un día real
+ * (rechaza '2026-02-31', que `new Date` normaliza en silencio al 3 de marzo); si no,
+ * se descarta sin lanzar — un import nunca debe reventar por una fecha mala.
+ */
 function fechaImportada(v: unknown): string {
-  return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "";
+  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return "";
+  const d = new Date(`${v}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v ? v : "";
+}
+/** URL de nota de ingeniería: solo http(s) absoluto. `ficha-tarea.tsx` la renderiza como
+ *  `<a href>`; aceptar 'javascript:' u otro esquema del archivo importado sería XSS al clic. */
+function urlSegura(v: unknown): string | null {
+  if (typeof v !== "string" || !v) return null;
+  try {
+    const u = new URL(v);
+    return u.protocol === "http:" || u.protocol === "https:" ? v.slice(0, 2000) : null;
+  } catch {
+    return null;
+  }
+}
+function notaImportada(v: unknown): NotaIngenieria | null {
+  if (typeof v !== "object" || v === null) return null;
+  const n = v as Record<string, unknown>;
+  const texto = strOr(n.texto, "");
+  if (!texto) return null;
+  return {
+    texto,
+    fuente: strOr(n.fuente, "") || null,
+    url: urlSegura(n.url),
+    verificar: n.verificar === true,
+  };
+}
+/** Sanea `notasIngenieria` del archivo: cada nota necesita `texto`, y `url` pasa por
+ *  `urlSegura`. Antes se aceptaba el array tal cual del JSON sin validar ningún campo. */
+function notasIngenieriaImportadas(v: unknown): NotaIngenieria[] | null {
+  if (!Array.isArray(v)) return null;
+  const out = v
+    .slice(0, 200)
+    .map(notaImportada)
+    .filter((n): n is NotaIngenieria => n !== null);
+  return out.length > 0 ? out : null;
 }
 function historialImportado(
   v: unknown,
@@ -486,7 +524,7 @@ export async function importarProyectoJSON(datos: unknown) {
     throw new Error("El archivo no tiene el formato esperado.");
   }
   const raw = datos as Record<string, unknown>;
-  if (typeof raw.nombre !== "string" || !Array.isArray(raw.tareas)) {
+  if (typeof raw.nombre !== "string" || !raw.nombre.trim() || !Array.isArray(raw.tareas)) {
     throw new Error("El archivo no tiene el formato de proyecto esperado.");
   }
   if (raw.tareas.length > MAX_TAREAS_IMPORT) {
@@ -501,6 +539,9 @@ export async function importarProyectoJSON(datos: unknown) {
     ...usuariosSnap.docs.map((d) => (d.data() as Usuario).nombre),
     ...((equipoSnap.data()?.membersLegacy as string[] | undefined) ?? []),
   ]);
+  // Un `responsableUid` inventado (typo, id de otro entorno) dejaba la tarea "asignada" a un
+  // usuario que no existe: no aparecía en ningún filtro por persona ni en "Mis tareas".
+  const uidsConocidos = new Set(usuariosSnap.docs.map((d) => d.id));
 
   const ahora = Date.now();
   const proyectoRef = adminDb.collection("proyectos").doc();
@@ -516,7 +557,10 @@ export async function importarProyectoJSON(datos: unknown) {
     const categoria = CATEGORIAS.includes(t.categoria as Categoria) ? (t.categoria as Categoria) : "Modelado";
     const estado = ESTADOS_TAREA.includes(t.estado as EstadoTarea) ? (t.estado as EstadoTarea) : "Sin iniciar";
     const prioridad = PRIORIDADES.includes(t.prioridad as Prioridad) ? (t.prioridad as Prioridad) : "Media";
-    const porcentaje = numEnRango(t.porcentaje, 0, 100, 0);
+    // Una tarea "Completada" al 40% deja `tareasCompletadas` y `avanceTotal` diciendo cosas
+    // distintas de la misma tarea (mismo motivo que `validarDatosTarea`); se normaliza en
+    // vez de conservar el porcentaje crudo del archivo.
+    const porcentaje = estado === "Completada" ? 100 : numEnRango(t.porcentaje, 0, 100, 0);
 
     const plantillaId =
       typeof t.plantillaId === "string" && t.plantillaId ? t.plantillaId : inferirPlantillaId(nombre);
@@ -540,7 +584,7 @@ export async function importarProyectoJSON(datos: unknown) {
       subgrupo,
       zona: strOr(t.zona, "") || null,
       etapa: etapa || null,
-      responsableUid: typeof t.responsableUid === "string" ? t.responsableUid : null,
+      responsableUid: typeof t.responsableUid === "string" && uidsConocidos.has(t.responsableUid) ? t.responsableUid : null,
       responsable: strOr(t.responsable, ""),
       prioridad,
       estado,
@@ -574,7 +618,8 @@ export async function importarProyectoJSON(datos: unknown) {
     if (typeof t.resultadoEsperado === "string") tarea.resultadoEsperado = strOr(t.resultadoEsperado);
     const criterios = listaDeTextos(t.criteriosVerificacion);
     if (criterios) tarea.criteriosVerificacion = criterios;
-    if (Array.isArray(t.notasIngenieria)) tarea.notasIngenieria = t.notasIngenieria as NotaIngenieria[];
+    const notas = notasIngenieriaImportadas(t.notasIngenieria);
+    if (notas) tarea.notasIngenieria = notas;
     const tips = listaDeTextos(t.tipsRevit);
     if (tips) tarea.tipsRevit = tips;
 
@@ -584,15 +629,15 @@ export async function importarProyectoJSON(datos: unknown) {
 
   const proyecto: Proyecto = {
     id: proyectoRef.id,
-    nombre: raw.nombre,
-    cliente: strOr(raw.cliente, ""),
-    fechaInicio: strOr(raw.fechaInicio, ""),
-    fechaEntrega: strOr(raw.fechaEntrega, ""),
+    nombre: strOr(raw.nombre, "Proyecto importado", 200),
+    cliente: strOr(raw.cliente, "", 200),
+    fechaInicio: fechaImportada(raw.fechaInicio),
+    fechaEntrega: fechaImportada(raw.fechaEntrega),
     disciplina: strOr(raw.disciplina, "Eléctrica"),
-    software: strOr(raw.software, "Revit"),
+    software: strOr(raw.software, "Revit", 200),
     estado: ESTADOS_PROYECTO.includes(raw.estado as EstadoProyecto) ? (raw.estado as EstadoProyecto) : "Sin iniciar",
     notas: strOr(raw.notas, ""),
-    zonas: Array.isArray(raw.zonas) ? (raw.zonas as string[]) : [],
+    zonas: listaDeTextos(raw.zonas, 300) ?? [],
     creado: ahora,
     actualizado: ahora,
     totalTareas: tareasCreadas.length,
