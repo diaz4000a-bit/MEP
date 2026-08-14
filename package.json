@@ -53,6 +53,8 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
-    "jose": "^5.10.0"
+    "jose": "^5.10.0",
+    "uuid": "^11.1.1",
+    "@opentelemetry/core": "^2.8.0"
   }
 }
