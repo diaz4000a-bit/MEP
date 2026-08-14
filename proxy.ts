@@ -18,6 +18,10 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const proxyConfig = {
+// Next 16 renombró Middleware a Proxy, pero el objeto de configuración se sigue leyendo
+// por el export `config` (docs/01-app/01-getting-started/16-proxy.md). Exportarlo como
+// `proxyConfig` no da error: el matcher simplemente no entra al manifiesto y esta capa
+// nunca llega a ejecutarse en producción.
+export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|api/session).*)'],
 };

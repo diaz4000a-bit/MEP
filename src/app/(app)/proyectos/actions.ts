@@ -11,6 +11,17 @@ import { adminDb } from "@/lib/firebase/admin";
 import { inferirGrupoYSubgrupo, inferirPlantillaId } from "@/lib/importar";
 import { computeAvance } from "@/lib/tareas";
 import { fechaBogota } from "@/lib/tiempo";
+import {
+  ESTADOS_TAREA,
+  PRIORIDADES,
+  TOPE_HISTORIAL,
+  type DatosTarea,
+  sanearHistorial,
+  trocear,
+  validarDatosTarea,
+  validarEstadoYPorcentaje,
+  validarVerificacion,
+} from "@/lib/validar";
 import type {
   Categoria,
   EstadoProyecto,
@@ -69,6 +80,42 @@ export async function crearProyecto(datos: DatosProyecto) {
   return { id: ref.id };
 }
 
+/**
+ * Crea un proyecto con sus tareas respetando el límite de 500 operaciones por WriteBatch.
+ *
+ * El documento del proyecto va PRIMERO a propósito: si un lote de tareas falla, queda un
+ * proyecto incompleto —visible en la lista y borrable— en vez de una subcolección de tareas
+ * colgando de un proyecto que no existe, invisible para la app y para el administrador.
+ * Si algún lote falla se revierte lo escrito antes de propagar el error.
+ */
+async function crearProyectoConTareas(
+  proyectoRef: FirebaseFirestore.DocumentReference,
+  proyecto: Proyecto,
+  tareas: { ref: FirebaseFirestore.DocumentReference; datos: Tarea }[],
+) {
+  await proyectoRef.set(proyecto);
+  try {
+    for (const lote of trocear(tareas)) {
+      const batch = adminDb.batch();
+      for (const t of lote) batch.set(t.ref, t.datos);
+      await batch.commit();
+    }
+  } catch (err) {
+    await eliminarProyectoCompleto(proyectoRef).catch(() => {});
+    throw err;
+  }
+}
+
+async function eliminarProyectoCompleto(proyectoRef: FirebaseFirestore.DocumentReference) {
+  const tareasSnap = await proyectoRef.collection("tareas").get();
+  for (const lote of trocear(tareasSnap.docs)) {
+    const batch = adminDb.batch();
+    for (const doc of lote) batch.delete(doc.ref);
+    await batch.commit();
+  }
+  await proyectoRef.delete();
+}
+
 export async function crearProyectoDesdeplantilla(datos: DatosProyecto) {
   const usuario = await exigirUsuario();
   await exigirPermiso(usuario, "crearProyecto");
@@ -80,8 +127,7 @@ export async function crearProyectoDesdeplantilla(datos: DatosProyecto) {
   const proyecto = proyectoBase(ref.id, datos, ahora);
   proyecto.totalTareas = catalogo.length;
 
-  const batch = adminDb.batch();
-  batch.set(ref, proyecto);
+  const tareas: { ref: FirebaseFirestore.DocumentReference; datos: Tarea }[] = [];
   for (const c of catalogo) {
     const tareaRef = ref.collection("tareas").doc();
     const notasIngenieria: NotaIngenieria[] = c.notasIngenieria;
@@ -119,9 +165,9 @@ export async function crearProyectoDesdeplantilla(datos: DatosProyecto) {
       notasIngenieria,
       tipsRevit: c.tipsRevit,
     };
-    batch.set(tareaRef, tarea);
+    tareas.push({ ref: tareaRef, datos: tarea });
   }
-  await batch.commit();
+  await crearProyectoConTareas(ref, proyecto, tareas);
 
   revalidatePath("/proyectos");
   return { id: ref.id };
@@ -133,77 +179,88 @@ export async function eliminarProyecto(proyectoId: string) {
 
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
   const tareasSnap = await proyectoRef.collection("tareas").get();
-  const batch = adminDb.batch();
-  for (const doc of tareasSnap.docs) batch.delete(doc.ref);
-  batch.delete(proyectoRef);
-  await batch.commit();
+
+  // Un WriteBatch admite como máximo 500 operaciones: un proyecto de plantilla completa ya
+  // ronda las 200 tareas y uno importado puede pasar de 500, con lo que el batch entero
+  // fallaba. Las tareas primero y el proyecto al final: si un lote falla, queda el proyecto
+  // con tareas de menos (visible y recuperable) y no una subcolección sin proyecto padre.
+  for (const lote of trocear(tareasSnap.docs)) {
+    const batch = adminDb.batch();
+    for (const doc of lote) batch.delete(doc.ref);
+    await batch.commit();
+  }
+  await proyectoRef.delete();
 
   revalidatePath("/proyectos");
 }
 
+export const MAX_NOTAS_PROYECTO = 20_000;
+
 export async function guardarNotasProyecto(proyectoId: string, notas: string) {
   const usuario = await exigirUsuario();
   await exigirPermiso(usuario, "editarTareaPropia"); // cualquier miembro activo del equipo puede anotar
+  if (typeof notas !== "string") throw new Error("Las notas deben ser texto.");
+  if (notas.length > MAX_NOTAS_PROYECTO) {
+    throw new Error(`Las notas superan el máximo de ${MAX_NOTAS_PROYECTO} caracteres.`);
+  }
   await adminDb.doc(`proyectos/${proyectoId}`).update({ notas, actualizado: Date.now() });
   revalidatePath(`/proyectos/${proyectoId}`);
 }
 
-interface DatosTarea {
-  nombre: string;
-  grupo: Tarea["grupo"];
-  subgrupo: string;
-  zona: string | null;
-  etapa: string | null;
-  categoria: Tarea["categoria"];
-  responsableUid: string | null;
-  responsable: string;
-  prioridad: Tarea["prioridad"];
-  estado: Tarea["estado"];
-  porcentaje: number;
-  fechaInicio: string;
-  fechaLimite: string;
-  horasEstimadas: number;
-  horasReales: number;
-  comentarios: string;
-  bloqueadoPor: string;
-}
-
-async function recalcularProyecto(proyectoId: string, ahora: number) {
-  const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
-  const snap = await proyectoRef.collection("tareas").get();
-  const tareas = snap.docs.map((d) => d.data() as Tarea);
-  await proyectoRef.update({
+/**
+ * Métricas denormalizadas del proyecto (`totalTareas`, `tareasCompletadas`, `avanceTotal`).
+ * Se calcula SIEMPRE dentro de la transacción que modifica las tareas: cuando esto vivía
+ * en una segunda ida a Firestore, dos operaciones simultáneas leían el mismo conteo y la
+ * última dejaba el encabezado del proyecto desfasado del contenido real.
+ */
+function metricasProyecto(tareas: Tarea[], ahora: number) {
+  return {
     totalTareas: tareas.length,
     tareasCompletadas: tareas.filter((t) => t.estado === "Completada").length,
     avanceTotal: computeAvance(tareas),
     actualizado: ahora,
-  });
+  };
 }
 
-export async function crearTarea(proyectoId: string, datos: DatosTarea) {
+export async function crearTarea(proyectoId: string, datosCrudos: DatosTarea) {
   const usuario = await exigirUsuario();
   await exigirPermiso(usuario, "crearTarea");
+  const datos = validarDatosTarea(datosCrudos);
 
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
   const tareaRef = proyectoRef.collection("tareas").doc();
   const ahora = Date.now();
-  const tarea: Tarea = {
-    id: tareaRef.id,
-    proyectoId,
-    plantillaId: null,
-    ...datos,
-    fechaCompletada: datos.estado === "Completada" ? fechaBogota() : "",
-    verificacion: {},
-    historial: [{ f: ahora, p: datos.porcentaje, e: datos.estado }],
-    actualizado: ahora,
-  };
-  await tareaRef.set(tarea);
-  await recalcularProyecto(proyectoId, ahora);
+
+  await adminDb.runTransaction(async (tx) => {
+    // En una transacción de Firestore TODAS las lecturas van antes que las escrituras.
+    // Leer el proyecto además garantiza que no se cree una tarea huérfana si el proyecto
+    // se borró entre que se abrió el diálogo y se pulsó Guardar.
+    const proyectoSnap = await tx.get(proyectoRef);
+    if (!proyectoSnap.exists) throw new Error("El proyecto ya no existe.");
+    const todasSnap = await tx.get(proyectoRef.collection("tareas"));
+
+    const tarea: Tarea = {
+      id: tareaRef.id,
+      proyectoId,
+      plantillaId: null,
+      ...datos,
+      fechaCompletada: datos.estado === "Completada" ? fechaBogota() : "",
+      verificacion: {},
+      historial: [{ f: ahora, p: datos.porcentaje, e: datos.estado }],
+      actualizado: ahora,
+    };
+
+    const todas = [...todasSnap.docs.map((d) => d.data() as Tarea), tarea];
+    tx.set(tareaRef, tarea);
+    tx.update(proyectoRef, metricasProyecto(todas, ahora));
+  });
+
   revalidatePath(`/proyectos/${proyectoId}`);
 }
 
-export async function actualizarTarea(proyectoId: string, tareaId: string, datos: DatosTarea) {
+export async function actualizarTarea(proyectoId: string, tareaId: string, datosCrudos: DatosTarea) {
   const usuario = await exigirUsuario();
+  const datos = validarDatosTarea(datosCrudos);
 
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
   const tareaRef = proyectoRef.collection("tareas").doc(tareaId);
@@ -222,10 +279,11 @@ export async function actualizarTarea(proyectoId: string, tareaId: string, datos
 
     const todasSnap = await tx.get(proyectoRef.collection("tareas"));
 
+    const historialActual = sanearHistorial(actual.historial);
     const huboCambio = datos.porcentaje !== actual.porcentaje || datos.estado !== actual.estado;
     const historial = huboCambio
-      ? [...actual.historial, { f: ahora, p: datos.porcentaje, e: datos.estado }].slice(-60)
-      : actual.historial;
+      ? [...historialActual, { f: ahora, p: datos.porcentaje, e: datos.estado }].slice(-TOPE_HISTORIAL)
+      : historialActual;
     const fechaCompletada = datos.estado === "Completada" ? actual.fechaCompletada || fechaBogota() : "";
 
     // Sin editarTareaAjena solo se puede tocar el progreso de la propia tarea: reasignar,
@@ -250,12 +308,7 @@ export async function actualizarTarea(proyectoId: string, tareaId: string, datos
     const todas = [...otras, actualizada];
 
     tx.update(tareaRef, actualizada as unknown as Record<string, unknown>);
-    tx.update(proyectoRef, {
-      totalTareas: todas.length,
-      tareasCompletadas: todas.filter((t) => t.estado === "Completada").length,
-      avanceTotal: computeAvance(todas),
-      actualizado: ahora,
-    });
+    tx.update(proyectoRef, metricasProyecto(todas, ahora));
   });
 
   revalidatePath(`/proyectos/${proyectoId}`);
@@ -264,10 +317,11 @@ export async function actualizarTarea(proyectoId: string, tareaId: string, datos
 export async function actualizarEstadoTarea(
   proyectoId: string,
   tareaId: string,
-  estado: Tarea["estado"],
-  porcentaje: number,
+  estadoCrudo: Tarea["estado"],
+  porcentajeCrudo: number,
 ) {
   const usuario = await exigirUsuario();
+  const { estado, porcentaje } = validarEstadoYPorcentaje(estadoCrudo, porcentajeCrudo);
 
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
   const tareaRef = proyectoRef.collection("tareas").doc(tareaId);
@@ -286,10 +340,11 @@ export async function actualizarEstadoTarea(
 
     const todasSnap = await tx.get(proyectoRef.collection("tareas"));
 
+    const historialActual = sanearHistorial(actual.historial);
     const huboCambio = porcentaje !== actual.porcentaje || estado !== actual.estado;
     const historial = huboCambio
-      ? [...actual.historial, { f: ahora, p: porcentaje, e: estado }].slice(-60)
-      : actual.historial;
+      ? [...historialActual, { f: ahora, p: porcentaje, e: estado }].slice(-TOPE_HISTORIAL)
+      : historialActual;
 
     const actualizada: Tarea = {
       ...actual,
@@ -305,12 +360,7 @@ export async function actualizarEstadoTarea(
     const todas = [...otras, actualizada];
 
     tx.update(tareaRef, actualizada as unknown as Record<string, unknown>);
-    tx.update(proyectoRef, {
-      totalTareas: todas.length,
-      tareasCompletadas: todas.filter((t) => t.estado === "Completada").length,
-      avanceTotal: computeAvance(todas),
-      actualizado: ahora,
-    });
+    tx.update(proyectoRef, metricasProyecto(todas, ahora));
   });
 
   revalidatePath(`/proyectos/${proyectoId}/tarea/${tareaId}`);
@@ -320,9 +370,10 @@ export async function actualizarEstadoTarea(
 export async function actualizarVerificacion(
   proyectoId: string,
   tareaId: string,
-  verificacion: Record<number, boolean>,
+  verificacionCruda: Record<number, boolean>,
 ) {
   const usuario = await exigirUsuario();
+  const verificacion = validarVerificacion(verificacionCruda);
 
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
   const tareaRef = proyectoRef.collection("tareas").doc(tareaId);
@@ -345,8 +396,19 @@ export async function eliminarTarea(proyectoId: string, tareaId: string) {
   await exigirPermiso(usuario, "eliminarTarea");
 
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
-  await proyectoRef.collection("tareas").doc(tareaId).delete();
-  await recalcularProyecto(proyectoId, Date.now());
+  const tareaRef = proyectoRef.collection("tareas").doc(tareaId);
+  const ahora = Date.now();
+
+  await adminDb.runTransaction(async (tx) => {
+    const proyectoSnap = await tx.get(proyectoRef);
+    if (!proyectoSnap.exists) throw new Error("El proyecto ya no existe.");
+    const todasSnap = await tx.get(proyectoRef.collection("tareas"));
+
+    const restantes = todasSnap.docs.filter((d) => d.id !== tareaId).map((d) => d.data() as Tarea);
+    tx.delete(tareaRef);
+    tx.update(proyectoRef, metricasProyecto(restantes, ahora));
+  });
+
   revalidatePath(`/proyectos/${proyectoId}`);
 }
 
@@ -373,15 +435,39 @@ export async function agregarZona(proyectoId: string, nombre: string) {
 }
 
 const ESTADOS_PROYECTO: EstadoProyecto[] = ["Sin iniciar", "En progreso", "Revisión", "Entregado"];
-const ESTADOS_TAREA: EstadoTarea[] = ["Sin iniciar", "En progreso", "En revisión", "Completada", "Bloqueada"];
-const PRIORIDADES: Prioridad[] = ["Alta", "Media", "Baja"];
 
-function strOr(v: unknown, fallback = ""): string {
-  return typeof v === "string" ? v : fallback;
+/** Tope de tareas por import. Por encima de esto el archivo casi seguro es un error. */
+const MAX_TAREAS_IMPORT = 5000;
+
+function strOr(v: unknown, fallback = "", max = 5000): string {
+  return typeof v === "string" ? v.slice(0, max) : fallback;
 }
 function numOr(v: unknown, fallback = 0): number {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
+}
+/** Entero acotado: un `porcentaje: 5000` del archivo rompía barras de avance y el informe. */
+function numEnRango(v: unknown, min: number, max: number, fallback = 0): number {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(n)));
+}
+function listaDeTextos(v: unknown): string[] | null {
+  if (!Array.isArray(v)) return null;
+  return v.filter((x): x is string => typeof x === "string").map((x) => x.slice(0, 5000));
+}
+/** Fecha del archivo: se conserva si es 'AAAA-MM-DD', si no se descarta (nunca revienta el import). */
+function fechaImportada(v: unknown): string {
+  return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "";
+}
+function historialImportado(
+  v: unknown,
+  ahora: number,
+  porcentaje: number,
+  estado: EstadoTarea,
+): Tarea["historial"] {
+  const saneado = sanearHistorial(v);
+  return saneado.length > 0 ? saneado : [{ f: ahora, p: porcentaje, e: estado }];
 }
 
 /**
@@ -400,6 +486,9 @@ export async function importarProyectoJSON(datos: unknown) {
   if (typeof raw.nombre !== "string" || !Array.isArray(raw.tareas)) {
     throw new Error("El archivo no tiene el formato de proyecto esperado.");
   }
+  if (raw.tareas.length > MAX_TAREAS_IMPORT) {
+    throw new Error(`El archivo trae ${raw.tareas.length} tareas; el máximo por importación es ${MAX_TAREAS_IMPORT}.`);
+  }
 
   const [usuariosSnap, equipoSnap] = await Promise.all([
     adminDb.collection("usuarios").get(),
@@ -412,7 +501,7 @@ export async function importarProyectoJSON(datos: unknown) {
 
   const ahora = Date.now();
   const proyectoRef = adminDb.collection("proyectos").doc();
-  const batch = adminDb.batch();
+  const tareasAEscribir: { ref: FirebaseFirestore.DocumentReference; datos: Tarea }[] = [];
   const tareasCreadas: Tarea[] = [];
 
   for (const item of raw.tareas) {
@@ -424,7 +513,7 @@ export async function importarProyectoJSON(datos: unknown) {
     const categoria = CATEGORIAS.includes(t.categoria as Categoria) ? (t.categoria as Categoria) : "Modelado";
     const estado = ESTADOS_TAREA.includes(t.estado as EstadoTarea) ? (t.estado as EstadoTarea) : "Sin iniciar";
     const prioridad = PRIORIDADES.includes(t.prioridad as Prioridad) ? (t.prioridad as Prioridad) : "Media";
-    const porcentaje = numOr(t.porcentaje, 0);
+    const porcentaje = numEnRango(t.porcentaje, 0, 100, 0);
 
     const plantillaId =
       typeof t.plantillaId === "string" && t.plantillaId ? t.plantillaId : inferirPlantillaId(nombre);
@@ -453,35 +542,40 @@ export async function importarProyectoJSON(datos: unknown) {
       prioridad,
       estado,
       porcentaje,
-      fechaInicio: strOr(t.fechaInicio, ""),
-      fechaLimite: strOr(t.fechaLimite, ""),
-      fechaCompletada: strOr(t.fechaCompletada, ""),
-      horasEstimadas: numOr(t.horasEstimadas, 0),
-      horasReales: numOr(t.horasReales, 0),
+      fechaInicio: fechaImportada(t.fechaInicio),
+      fechaLimite: fechaImportada(t.fechaLimite),
+      fechaCompletada: fechaImportada(t.fechaCompletada),
+      horasEstimadas: Math.max(0, numOr(t.horasEstimadas, 0)),
+      horasReales: Math.max(0, numOr(t.horasReales, 0)),
       comentarios: strOr(t.comentarios, ""),
       bloqueadoPor: strOr(t.bloqueadoPor, ""),
-      verificacion:
-        typeof t.verificacion === "object" && t.verificacion !== null
-          ? (t.verificacion as Record<number, boolean>)
-          : {},
-      historial:
-        Array.isArray(t.historial) && t.historial.length > 0
-          ? (t.historial as Tarea["historial"])
-          : [{ f: ahora, p: porcentaje, e: estado }],
+      verificacion: validarVerificacion(
+        typeof t.verificacion === "object" && t.verificacion !== null ? t.verificacion : {},
+      ),
+      // `historial` es el campo que el informe HTML interpola sin escapar (`p` y `f` van
+      // como números crudos). Aceptarlo tal cual del archivo era el vector de XSS
+      // persistente: `sanearHistorial` fuerza números y estados de la lista blanca.
+      historial: historialImportado(t.historial, ahora, porcentaje, estado),
       actualizado: ahora,
     };
 
     // Overrides de contenido: solo si vienen en el archivo (Firestore rechaza `undefined`).
-    if (typeof t.descripcion === "string") tarea.descripcion = t.descripcion;
-    if (typeof t.objetivo === "string") tarea.objetivo = t.objetivo;
-    if (Array.isArray(t.requisitos)) tarea.requisitos = t.requisitos as string[];
-    if (Array.isArray(t.procedimiento)) tarea.procedimiento = t.procedimiento as string[];
-    if (typeof t.resultadoEsperado === "string") tarea.resultadoEsperado = t.resultadoEsperado;
-    if (Array.isArray(t.criteriosVerificacion)) tarea.criteriosVerificacion = t.criteriosVerificacion as string[];
+    // Los arrays se filtran a strings; antes un `requisitos: [{...}]` entraba tal cual y la
+    // ficha de la tarea reventaba al renderizarlo.
+    if (typeof t.descripcion === "string") tarea.descripcion = strOr(t.descripcion);
+    if (typeof t.objetivo === "string") tarea.objetivo = strOr(t.objetivo);
+    const requisitos = listaDeTextos(t.requisitos);
+    if (requisitos) tarea.requisitos = requisitos;
+    const procedimiento = listaDeTextos(t.procedimiento);
+    if (procedimiento) tarea.procedimiento = procedimiento;
+    if (typeof t.resultadoEsperado === "string") tarea.resultadoEsperado = strOr(t.resultadoEsperado);
+    const criterios = listaDeTextos(t.criteriosVerificacion);
+    if (criterios) tarea.criteriosVerificacion = criterios;
     if (Array.isArray(t.notasIngenieria)) tarea.notasIngenieria = t.notasIngenieria as NotaIngenieria[];
-    if (Array.isArray(t.tipsRevit)) tarea.tipsRevit = t.tipsRevit as string[];
+    const tips = listaDeTextos(t.tipsRevit);
+    if (tips) tarea.tipsRevit = tips;
 
-    batch.set(tareaRef, tarea);
+    tareasAEscribir.push({ ref: tareaRef, datos: tarea });
     tareasCreadas.push(tarea);
   }
 
@@ -502,17 +596,19 @@ export async function importarProyectoJSON(datos: unknown) {
     tareasCompletadas: tareasCreadas.filter((t) => t.estado === "Completada").length,
     avanceTotal: computeAvance(tareasCreadas),
   };
-  batch.set(proyectoRef, proyecto);
 
-  // Incorporar responsables nuevos al equipo, igual que hacía la v1 al importar.
+  await crearProyectoConTareas(proyectoRef, proyecto, tareasAEscribir);
+
+  // Incorporar responsables nuevos al equipo, igual que hacía la v1 al importar. Va después
+  // del proyecto: es un efecto secundario y no debe abortar la importación si falla.
   const nombresNuevos = [...new Set(tareasCreadas.map((t) => t.responsable).filter(Boolean))].filter(
     (n) => !nombresConocidos.has(n),
   );
   if (nombresNuevos.length > 0) {
-    batch.set(adminDb.doc("config/equipo"), { membersLegacy: FieldValue.arrayUnion(...nombresNuevos) }, { merge: true });
+    await adminDb
+      .doc("config/equipo")
+      .set({ membersLegacy: FieldValue.arrayUnion(...nombresNuevos) }, { merge: true });
   }
-
-  await batch.commit();
 
   revalidatePath("/proyectos");
   return { id: proyectoRef.id };
@@ -530,13 +626,16 @@ export async function eliminarZona(proyectoId: string, zona: string) {
   ]);
   if (!proyectoSnap.exists) throw new Error("El proyecto ya no existe.");
 
-  const batch = adminDb.batch();
+  const ahora = Date.now();
   const zonas = ((proyectoSnap.data() as Proyecto).zonas ?? []).filter((z) => z !== zona);
-  batch.update(proyectoRef, { zonas, actualizado: Date.now() });
-  for (const doc of tareasDeZonaSnap.docs) {
-    batch.update(doc.ref, { zona: null, actualizado: Date.now() });
+
+  // Una zona con más de 500 tareas reventaba el batch único (límite de Firestore).
+  for (const lote of trocear(tareasDeZonaSnap.docs)) {
+    const batch = adminDb.batch();
+    for (const doc of lote) batch.update(doc.ref, { zona: null, actualizado: ahora });
+    await batch.commit();
   }
-  await batch.commit();
+  await proyectoRef.update({ zonas, actualizado: ahora });
 
   revalidatePath(`/proyectos/${proyectoId}`);
 }

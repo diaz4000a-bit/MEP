@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { formatearDuracion, formatearHora } from "@/lib/jornadas";
 import { computeAvance } from "@/lib/tareas";
 import { ZONA, fechaBogota, fechaLarga, ventanaDelDia } from "@/lib/tiempo";
+import { sanearHistorial } from "@/lib/validar";
 import type { EstadoTarea, Jornada, Proyecto, Tarea } from "@/types";
 
 // Colores del tema oscuro de la app (globals.css) — el informe es un documento
@@ -49,7 +50,11 @@ function recolectarActividadDelDia(tareas: Tarea[], fecha: string): Record<strin
   const mapa: Record<string, FilaActividad[]> = {};
 
   for (const t of tareas) {
-    const h = t.historial ?? [];
+    // `sanearHistorial` fuerza que `f`/`p` sean números y `e` un estado de la lista blanca.
+    // Este HTML interpola `p` y `f` SIN escapar (nadie escapa un número); si el documento
+    // trae strings ahí —posible vía import JSON— acaban dentro del HTML tal cual. Sanear al
+    // leer hace verdadero el tipo en vez de confiar en el `as Tarea` del snapshot.
+    const h = sanearHistorial(t.historial);
     const dia: { de: number; a: number; e: EstadoTarea; f: number }[] = [];
     // i === 0 es la foto inicial de creación/importación de la tarea, no trabajo real —
     // si se cuenta, toda tarea creada/importada hoy aparece como "trabajada" aunque nadie
@@ -106,9 +111,13 @@ function construirInformeHTML(
     if (js.length === 0) return '<span class="sinjornada">Sin jornada registrada este día</span>';
     return js
       .map((j) => {
-        const salida = j.salida ? formatearHora(j.salida) : "abierta";
-        const dur = j.duracionMin != null ? ` · ${formatearDuracion(j.duracionMin)}` : "";
-        return `${formatearHora(j.entrada)} → ${salida}${dur}`;
+        // `esc` también aquí: aunque estos campos los escribe el servidor, el informe es el
+        // único sitio donde datos de Firestore acaban como HTML, así que toda interpolación
+        // que produzca texto pasa por el escape. Los numéricos se garantizan numéricos en
+        // origen (`sanearHistorial`), que es la defensa equivalente para ese caso.
+        const salida = j.salida ? esc(formatearHora(j.salida)) : "abierta";
+        const dur = j.duracionMin != null ? ` · ${esc(formatearDuracion(j.duracionMin))}` : "";
+        return `${esc(formatearHora(j.entrada))} → ${salida}${dur}`;
       })
       .join(" · ");
   };
@@ -149,7 +158,7 @@ function construirInformeHTML(
                 `<td>${x.etapa ? esc(x.etapa) : "—"}</td>` +
                 `<td class="acol">${x.inicio}% → <b>${x.fin}%</b> <span class="delta ${x.delta > 0 ? "up" : x.delta < 0 ? "down" : ""}">${deltaTxt(x.delta)}</span></td>` +
                 `<td>${pillEstado(x.estado)}</td>` +
-                `<td class="hcol">${formatearHora(x.hora)}</td>` +
+                `<td class="hcol">${esc(formatearHora(x.hora))}</td>` +
                 `</tr>`,
             )
             .join("") +

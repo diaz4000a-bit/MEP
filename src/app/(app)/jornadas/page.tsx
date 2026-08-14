@@ -8,6 +8,7 @@ import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
 import { diaSemanaDeFecha, horarioVacio, minutosProgramadosDia, rangoFechas, validarDias } from "@/lib/horarios";
 import { esJornadaColgada, fechaBogota, formatearDuracion, formatearHora } from "@/lib/jornadas";
+import { validarRangoFechas } from "@/lib/validar";
 import type { HorarioSemanal, Jornada, Proyecto, Usuario } from "@/types";
 
 const ESTILO_ESTADO_CUMPLIMIENTO: Record<"Cumple" | "Parcial" | "No cumple" | "Libre", string> = {
@@ -39,14 +40,26 @@ export default async function JornadasPage({
   const puedeVerAjenas = puede(usuario.rol, "verJornadasAjenas");
   const params = await searchParams;
 
-  const desde = params.desde || primerDiaDelMes();
-  const hasta = params.hasta || hoy();
+  // El rango llega por querystring sin ningún control: `?desde=0001-01-01` hacía que la
+  // consulta barriera la colección entera y que `rangoFechas` construyera ~740.000 strings
+  // en memoria para la tabla de cumplimiento. Se acota a MAX_DIAS_RANGO días.
+  const { desde, hasta } = validarRangoFechas(params.desde ?? "", params.hasta ?? "", {
+    desde: primerDiaDelMes(),
+    hasta: hoy(),
+  });
   const uidFiltro = puedeVerAjenas ? params.uid || "" : usuario.uid;
   const proyectoFiltro = params.proyecto || "";
   const uidObjetivo = uidFiltro || usuario.uid;
 
+  // Quien no puede ver jornadas ajenas ya no se descarga las del equipo entero para
+  // descartarlas en memoria: el filtro por uid va en la consulta. Usa el índice compuesto
+  // (uid ASC, fecha DESC) ya declarado en firestore.indexes.json.
+  const consultaJornadas = puedeVerAjenas
+    ? adminDb.collection("jornadas")
+    : adminDb.collection("jornadas").where("uid", "==", usuario.uid);
+
   const [jornadasSnap, usuariosSnap, proyectosSnap, horarioSnap] = await Promise.all([
-    adminDb.collection("jornadas").where("fecha", ">=", desde).where("fecha", "<=", hasta).orderBy("fecha", "desc").get(),
+    consultaJornadas.where("fecha", ">=", desde).where("fecha", "<=", hasta).orderBy("fecha", "desc").get(),
     puedeVerAjenas ? adminDb.collection("usuarios").get() : Promise.resolve(null),
     adminDb.collection("proyectos").get(),
     adminDb.doc(`horarios/${uidObjetivo}`).get(),

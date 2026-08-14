@@ -5,9 +5,17 @@ import { formatearDuracion, formatearHora } from "@/lib/jornadas";
 import { fechaBogota } from "@/lib/tiempo";
 import type { Jornada } from "@/types";
 
+// Excel, LibreOffice y Sheets interpretan como fórmula toda celda que empiece por = + - @
+// (y por TAB o CR, que algunas versiones recortan antes de evaluar). Un nombre de proyecto
+// o una nota como `=HYPERLINK("http://…","clic")` se ejecuta al abrir el CSV, no al
+// generarlo: entrecomillar no basta porque las comillas se consumen al parsear.
+// Prefijar con apóstrofe fuerza a que la celda se lea como texto.
+const PREFIJO_FORMULA = /^[=+\-@\t\r]/;
+
 function csvEscape(valor: string): string {
-  if (/[",\n]/.test(valor)) return `"${valor.replace(/"/g, '""')}"`;
-  return valor;
+  const seguro = PREFIJO_FORMULA.test(valor) ? `'${valor}` : valor;
+  if (/[",\n\r]/.test(seguro)) return `"${seguro.replace(/"/g, '""')}"`;
+  return seguro;
 }
 
 export function ExportarCsvBoton({ jornadas }: { jornadas: Jornada[] }) {
