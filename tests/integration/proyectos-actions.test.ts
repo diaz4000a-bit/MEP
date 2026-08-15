@@ -113,8 +113,8 @@ describe("crearProyectoDesdeplantilla", () => {
     expect(tareas.every((t) => t.proyectoId === id)).toBe(true);
   });
 
-  it("un rol sin permiso (ingeniero) no puede crear desde plantilla", async () => {
-    comoRol("ingeniero");
+  it("un rol sin permiso (usuario) no puede crear desde plantilla", async () => {
+    comoRol("usuario");
     await expect(
       crearProyectoDesdeplantilla({ nombre: "X", cliente: "", fechaInicio: "", fechaEntrega: "", software: "" }),
     ).rejects.toThrow("No tienes permiso");
@@ -139,11 +139,11 @@ describe("eliminarProyecto", () => {
     expect(await leerTareas(id)).toEqual([]);
   });
 
-  it("un rol sin permiso (ingeniero) no puede borrar proyectos", async () => {
+  it("un rol sin permiso (modelador) no puede borrar proyectos", async () => {
     comoRol("admin");
     const { id } = await crearProyecto({ nombre: "X", cliente: "", fechaInicio: "", fechaEntrega: "", software: "" });
 
-    comoRol("ingeniero");
+    comoRol("modelador");
     await expect(eliminarProyecto(id)).rejects.toThrow("No tienes permiso");
     expect((await adminDb.doc(`proyectos/${id}`).get()).exists).toBe(true);
   });

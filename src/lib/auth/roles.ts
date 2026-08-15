@@ -9,13 +9,13 @@ export const ETIQUETA_ROL: Record<Rol, string> = {
 };
 
 export const ACCIONES = {
-  crearProyecto: ['admin', 'coordinador'],
-  borrarProyecto: ['admin', 'coordinador'],
-  crearTarea: ['admin', 'coordinador'],
-  eliminarTarea: ['admin', 'coordinador'],
-  editarTareaAjena: ['admin', 'coordinador'],
+  crearProyecto: ['admin', 'coordinador', 'ingeniero', 'modelador'],
+  borrarProyecto: ['admin', 'coordinador', 'ingeniero'],
+  crearTarea: ['admin', 'coordinador', 'ingeniero', 'modelador'],
+  eliminarTarea: ['admin', 'coordinador', 'ingeniero'],
+  editarTareaAjena: ['admin', 'coordinador', 'ingeniero', 'modelador'],
   editarTareaPropia: ['admin', 'coordinador', 'ingeniero', 'modelador'],
-  verJornadasAjenas: ['admin', 'coordinador'],
+  verJornadasAjenas: ['admin', 'coordinador', 'ingeniero'],
   gestionarUsuarios: ['admin'],
   gestionarEquipo: ['admin', 'coordinador'],
 } satisfies Record<string, Rol[]>;

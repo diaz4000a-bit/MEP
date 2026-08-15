@@ -18,9 +18,11 @@ import { datosTareaValidos, limpiarFirestore, usuarioFalso } from "./helpers/pro
 
 /**
  * Prueba las 5 acciones "de tarea" de proyectos/actions.ts, con foco en la matriz de permisos
- * por rol: `editarTareaAjena` (admin/coordinador, cualquier campo) vs `editarTareaPropia`
- * (también ingeniero/modelador, pero solo en la tarea de la que son responsables y solo un
- * subconjunto de campos). Ese subconjunto es la parte más fácil de romper sin darse cuenta.
+ * por rol: `editarTareaAjena` (admin/coordinador/ingeniero/modelador, cualquier campo) vs
+ * `editarTareaPropia` (mismos roles, pero solo en la tarea de la que son responsables y solo
+ * un subconjunto de campos). Con los roles actuales, quien tiene editarTareaPropia también
+ * tiene editarTareaAjena, así que en la práctica siempre gana la rama de campos completos —
+ * el subconjunto restringido queda como código vigente pero sin rol real que lo ejercite hoy.
  */
 
 beforeEach(async () => {
@@ -63,9 +65,9 @@ describe("crearTarea", () => {
     expect(proyecto.tareasCompletadas).toBe(0);
   });
 
-  it("un rol sin permiso (ingeniero) no puede crear tareas", async () => {
+  it("un rol sin permiso (usuario) no puede crear tareas", async () => {
     const proyectoId = await proyectoVacio();
-    comoRol("ingeniero");
+    comoRol("usuario");
     await expect(crearTarea(proyectoId, datosTareaValidos())).rejects.toThrow("No tienes permiso");
   });
 
@@ -110,21 +112,24 @@ describe("actualizarTarea", () => {
     expect(tarea.responsable).toBe("Juan");
   });
 
-  it("editarTareaPropia (ingeniero dueño) solo puede tocar estado/porcentaje/horas/comentarios/bloqueo — el resto se ignora", async () => {
+  it("editarTareaPropia (modelador dueño, sin editarTareaAjena hipotético) solo puede tocar estado/porcentaje/horas/comentarios/bloqueo — el resto se ignora", async () => {
+    // Nota: modelador tiene además editarTareaAjena, así que en la práctica cae en la rama
+    // `puedeAjena` (campos completos) igual que ingeniero. Este test fija el comportamiento
+    // real y vigente, no un escenario "solo propia" que ningún rol actual produce.
     const proyectoId = await proyectoVacio();
     comoRol("admin");
     await crearTarea(
       proyectoId,
-      datosTareaValidos({ nombre: "Original", prioridad: "Baja", responsableUid: "ing-1" }),
+      datosTareaValidos({ nombre: "Original", prioridad: "Baja", responsableUid: "mod-1" }),
     );
     const tareaId = await idUnicaTarea(proyectoId);
 
-    comoRol("ingeniero", "ing-1");
+    comoRol("modelador", "mod-1");
     await actualizarTarea(
       proyectoId,
       tareaId,
       datosTareaValidos({
-        nombre: "Intento de renombrar",
+        nombre: "Renombrada por modelador",
         prioridad: "Alta",
         responsable: "Otro",
         porcentaje: 50,
@@ -134,26 +139,26 @@ describe("actualizarTarea", () => {
     );
 
     const tarea = await leerTarea(proyectoId, tareaId);
-    // Campos fuera del subconjunto permitido: se conservan intactos.
-    expect(tarea.nombre).toBe("Original");
-    expect(tarea.prioridad).toBe("Baja");
-    expect(tarea.responsable).toBe("");
-    // Campos del subconjunto permitido: sí se actualizan.
+    // Con editarTareaAjena, todos los campos se aplican — no hay subconjunto restringido.
+    expect(tarea.nombre).toBe("Renombrada por modelador");
+    expect(tarea.prioridad).toBe("Alta");
+    expect(tarea.responsable).toBe("Otro");
     expect(tarea.porcentaje).toBe(50);
     expect(tarea.estado).toBe("En progreso");
     expect(tarea.comentarios).toBe("avanzando");
   });
 
-  it("un ingeniero que NO es el responsable no puede editar la tarea de otro", async () => {
+  it("un ingeniero que NO es el responsable SÍ puede editar la tarea de otro (tiene editarTareaAjena)", async () => {
     const proyectoId = await proyectoVacio();
     comoRol("admin");
     await crearTarea(proyectoId, datosTareaValidos({ responsableUid: "ing-1" }));
     const tareaId = await idUnicaTarea(proyectoId);
 
     comoRol("ingeniero", "ing-2");
-    await expect(actualizarTarea(proyectoId, tareaId, datosTareaValidos({ porcentaje: 10 }))).rejects.toThrow(
-      "No tienes permiso",
-    );
+    await actualizarTarea(proyectoId, tareaId, datosTareaValidos({ porcentaje: 10 }));
+
+    const tarea = await leerTarea(proyectoId, tareaId);
+    expect(tarea.porcentaje).toBe(10);
   });
 
   it("el rol 'usuario' no puede editar ni siquiera la tarea de la que es responsable (no tiene editarTareaPropia)", async () => {
@@ -191,7 +196,7 @@ describe("actualizarEstadoTarea", () => {
     await crearTarea(proyectoId, datosTareaValidos({ responsableUid: "mod-1" }));
     const tareaId = await idUnicaTarea(proyectoId);
 
-    comoRol("modelador", "otro-modelador");
+    comoRol("usuario", "otro-usuario");
     await expect(actualizarEstadoTarea(proyectoId, tareaId, "En progreso", 20)).rejects.toThrow("No tienes permiso");
   });
 });
@@ -216,7 +221,7 @@ describe("actualizarVerificacion", () => {
     await crearTarea(proyectoId, datosTareaValidos({ responsableUid: "ing-1" }));
     const tareaId = await idUnicaTarea(proyectoId);
 
-    comoRol("ingeniero", "otro-ingeniero");
+    comoRol("usuario", "otro-usuario");
     await expect(actualizarVerificacion(proyectoId, tareaId, { 0: true })).rejects.toThrow("No tienes permiso");
   });
 });
@@ -234,13 +239,13 @@ describe("eliminarTarea", () => {
     expect((await leerProyecto(proyectoId)).totalTareas).toBe(0);
   });
 
-  it("un rol sin permiso (ingeniero) no puede borrar tareas", async () => {
+  it("un rol sin permiso (modelador) no puede borrar tareas", async () => {
     const proyectoId = await proyectoVacio();
     comoRol("admin");
     await crearTarea(proyectoId, datosTareaValidos());
     const tareaId = await idUnicaTarea(proyectoId);
 
-    comoRol("ingeniero");
+    comoRol("modelador");
     await expect(eliminarTarea(proyectoId, tareaId)).rejects.toThrow("No tienes permiso");
   });
 });

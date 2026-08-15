@@ -8,7 +8,7 @@ service cloud.firestore {
     function rol()      { return datos().rol; }
     function activo()   { return auth0() && datos().activo == true; }
     function esAdmin()  { return activo() && rol() == 'admin'; }
-    function esGestor() { return activo() && rol() in ['admin', 'coordinador']; }
+    function esGestor() { return activo() && rol() in ['admin', 'coordinador', 'ingeniero']; }
 
     // Principio de estas reglas: el cliente SOLO lee. La única escritura que hace la app
     // desde el navegador es el alta de la propia cuenta en /login. Todo lo demás (jornadas,

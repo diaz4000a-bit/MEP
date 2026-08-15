@@ -24,7 +24,7 @@ beforeEach(async () => {
   vi.mocked(exigirUsuario).mockReset();
 });
 
-function comoRol(rol: "ingeniero" | "coordinador", uid = `${rol}-uid`) {
+function comoRol(rol: "ingeniero" | "coordinador" | "modelador", uid = `${rol}-uid`) {
   vi.mocked(exigirUsuario).mockResolvedValue(usuarioFalso(uid, rol));
 }
 
@@ -178,7 +178,7 @@ describe("GET /api/informe/[id]", () => {
       estado: "abierta",
     });
 
-    comoRol("ingeniero", "yo-uid");
+    comoRol("modelador", "yo-uid");
     const htmlSinPermiso = await (await GET(urlInforme("p1", { fecha: FECHA }), ctx("p1"))).text();
     expect(htmlSinPermiso).toContain("Otro Ingeniero"); // la actividad de tarea no es dato reservado
     expect(htmlSinPermiso).toContain("Sin jornada registrada este día"); // pero su jornada sí lo es

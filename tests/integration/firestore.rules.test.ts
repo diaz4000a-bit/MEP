@@ -21,6 +21,7 @@ const COORDINADOR = "coordinador-uid";
 const INGENIERO = "ingeniero-uid";
 const PENDIENTE = "pendiente-uid";
 const OTRO = "otro-ingeniero-uid";
+const MODELADOR = "modelador-uid";
 
 let testEnv: RulesTestEnvironment;
 
@@ -53,6 +54,7 @@ beforeEach(async () => {
       }),
       setDoc(doc(db, "usuarios", INGENIERO), { uid: INGENIERO, rol: "ingeniero", activo: true, nombre: "Ingeniero" }),
       setDoc(doc(db, "usuarios", OTRO), { uid: OTRO, rol: "ingeniero", activo: true, nombre: "Otro" }),
+      setDoc(doc(db, "usuarios", MODELADOR), { uid: MODELADOR, rol: "modelador", activo: true, nombre: "Modelador" }),
       setDoc(doc(db, "usuarios", PENDIENTE), { uid: PENDIENTE, rol: "usuario", activo: false, nombre: "Pendiente" }),
       setDoc(doc(db, "proyectos", "p1"), { nombre: "Proyecto 1" }),
       setDoc(doc(db, "proyectos", "p1", "tareas", "t1"), { nombre: "Tarea 1" }),
@@ -82,11 +84,12 @@ describe("usuarios", () => {
   });
 
   it("un usuario activo no puede leer el doc de otro sin ser gestor", async () => {
-    await assertFails(getDoc(doc(como(INGENIERO), "usuarios", OTRO)));
+    await assertFails(getDoc(doc(como(MODELADOR), "usuarios", OTRO)));
   });
 
-  it("un gestor (coordinador) sí puede leer el doc de otro usuario", async () => {
+  it("un gestor (coordinador o ingeniero) sí puede leer el doc de otro usuario", async () => {
     await assertSucceeds(getDoc(doc(como(COORDINADOR), "usuarios", INGENIERO)));
+    await assertSucceeds(getDoc(doc(como(INGENIERO), "usuarios", OTRO)));
   });
 
   it("solo un admin puede listar /usuarios", async () => {
@@ -182,11 +185,12 @@ describe("jornadas", () => {
   });
 
   it("otro usuario sin ser gestor no puede leer (get) una jornada ajena", async () => {
-    await assertFails(getDoc(doc(como(INGENIERO), "jornadas", "j-otro")));
+    await assertFails(getDoc(doc(como(MODELADOR), "jornadas", "j-otro")));
   });
 
-  it("un gestor SÍ puede leer (get) una jornada ajena", async () => {
+  it("un gestor (coordinador o ingeniero) SÍ puede leer (get) una jornada ajena", async () => {
     await assertSucceeds(getDoc(doc(como(COORDINADOR), "jornadas", "j-otro")));
+    await assertSucceeds(getDoc(doc(como(INGENIERO), "jornadas", "j-otro")));
   });
 
   it("un usuario puede listar (query) sus propias jornadas", async () => {
@@ -222,10 +226,11 @@ describe("catalogoOverrides", () => {
 });
 
 describe("horarios", () => {
-  it("el dueño y un gestor pueden leer un horario; un tercero no; nadie escribe desde el cliente", async () => {
+  it("el dueño y un gestor (coordinador o ingeniero) pueden leer un horario; un tercero no; nadie escribe desde el cliente", async () => {
     await assertSucceeds(getDoc(doc(como(INGENIERO), "horarios", INGENIERO)));
     await assertSucceeds(getDoc(doc(como(COORDINADOR), "horarios", INGENIERO)));
-    await assertFails(getDoc(doc(como(OTRO), "horarios", INGENIERO)));
+    await assertSucceeds(getDoc(doc(como(OTRO), "horarios", INGENIERO)));
+    await assertFails(getDoc(doc(como(MODELADOR), "horarios", INGENIERO)));
     await assertFails(setDoc(doc(como(INGENIERO), "horarios", INGENIERO), { uid: INGENIERO, dias: {} }));
   });
 });

@@ -122,7 +122,7 @@ describe("registrarSalida", () => {
     await registrarEntrada({ proyectoId: "p1" });
     const { id } = await jornadaUnica();
 
-    comoRol("ingeniero", "ing-2");
+    comoRol("modelador", "mod-1");
     await expect(registrarSalida({ jornadaId: id })).rejects.toThrow("No tienes permiso");
 
     comoRol("coordinador");

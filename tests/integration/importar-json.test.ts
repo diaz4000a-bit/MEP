@@ -34,8 +34,8 @@ async function leerProyectoImportado(): Promise<{ proyecto: Proyecto; tareas: Ta
 }
 
 describe("permisos y formato", () => {
-  it("un rol sin permiso (ingeniero) no puede importar", async () => {
-    comoRol("ingeniero");
+  it("un rol sin permiso (usuario) no puede importar", async () => {
+    comoRol("usuario");
     await expect(importarProyectoJSON({ nombre: "X", tareas: [] })).rejects.toThrow("No tienes permiso");
   });
 
