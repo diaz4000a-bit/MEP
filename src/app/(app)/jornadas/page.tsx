@@ -146,6 +146,7 @@ export default async function JornadasPage({
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <HorarioCard
+          key={uidObjetivo}
           uidObjetivo={uidObjetivo}
           nombreObjetivo={nombreObjetivo}
           diasIniciales={horarioDias}
