@@ -3,9 +3,18 @@ import { exigirUsuario } from "@/lib/auth/sesion";
 import { adminDb } from "@/lib/firebase/admin";
 import { formatearDuracion, formatearHora } from "@/lib/jornadas";
 import { computeAvance } from "@/lib/tareas";
-import { ZONA, fechaBogota, fechaLarga, ventanaDelDia } from "@/lib/tiempo";
+import { ZONA, fechaBogota, fechaLarga, fechaLegible, ventanaDelDia } from "@/lib/tiempo";
+import {
+  DIAS_ALERTA_TRAMITE,
+  diasRestantes,
+  esTramiteCerrado,
+  ETIQUETA_SEMAFORO,
+  semaforoProyecto,
+  semaforoTramite,
+  type Semaforo,
+} from "@/lib/tramites";
 import { sanearHistorial } from "@/lib/validar";
-import type { EstadoTarea, Jornada, Proyecto, Tarea } from "@/types";
+import type { EstadoTarea, EstadoTramite, Jornada, Proyecto, Tarea, Tramite } from "@/types";
 
 // Colores del tema oscuro de la app (globals.css) — el informe es un documento
 // autocontenido con tema claro, así que no puede leer las variables CSS de la app.
@@ -15,6 +24,21 @@ const COLOR_ESTADO: Record<EstadoTarea, string> = {
   "En revisión": "#a855f7",
   Completada: "#22c55e",
   Bloqueada: "#ef4444",
+};
+
+const COLOR_SEMAFORO_INFORME: Record<Semaforo, string> = {
+  verde: "#22c55e",
+  amarillo: "#f59e0b",
+  rojo: "#ef4444",
+};
+
+const COLOR_ESTADO_TRAMITE: Record<EstadoTramite, string> = {
+  "Sin iniciar": "#64748b",
+  "En preparación": "#4f8ef7",
+  Radicado: "#a855f7",
+  Subsanación: "#f59e0b",
+  Aprobado: "#22c55e",
+  Rechazado: "#ef4444",
 };
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -84,6 +108,88 @@ function recolectarActividadDelDia(tareas: Tarea[], fecha: string): Record<strin
   return mapa;
 }
 
+/**
+ * Bloque de tramites del informe.
+ *
+ * A diferencia del resto del documento -que reporta la actividad de UN dia- el estado de un
+ * tramite es el de HOY: una radicacion vencida lo sigue estando aunque se reimprima el
+ * informe del martes pasado. Por eso el bloque va rotulado con esa salvedad.
+ *
+ * Solo se listan los tramites ABIERTOS: los resueltos ya no bloquean nada y solo alargarian
+ * el informe. El contador del encabezado si los cuenta todos.
+ */
+function construirBloqueTramites(tramites: Tramite[]): string {
+  if (tramites.length === 0) return "";
+
+  const orden: Semaforo[] = ["rojo", "amarillo", "verde"];
+  const abiertos = tramites
+    .filter((t) => !esTramiteCerrado(t))
+    .sort((a, b) => {
+      const porColor = orden.indexOf(semaforoTramite(a)) - orden.indexOf(semaforoTramite(b));
+      if (porColor !== 0) return porColor;
+      return (a.fechaLimite || "9999-12-31").localeCompare(b.fechaLimite || "9999-12-31");
+    });
+
+  const cabecera = '<section class="tramites"><h2>Tramites y permisos</h2>';
+  if (abiertos.length === 0) {
+    return cabecera + '<div class="empty">Los ' + tramites.length + " tramite(s) del proyecto estan resueltos.</div></section>";
+  }
+
+  const plazo = (t: Tramite) => {
+    const d = diasRestantes(t);
+    if (d === null) return '<span class="tr-alerta">Sin fecha comprometida</span>';
+    if (d < 0) return '<span class="tr-critico">Vencido hace ' + Math.abs(d) + " d</span>";
+    if (d === 0) return '<span class="tr-critico">Vence hoy</span>';
+    if (d <= DIAS_ALERTA_TRAMITE) return '<span class="tr-alerta">Faltan ' + d + " d</span>";
+    return "Faltan " + d + " d";
+  };
+
+  const filas = abiertos
+    .map((t) => {
+      const color = semaforoTramite(t);
+      return (
+        "<tr>" +
+        '<td><span class="luz" style="background:' +
+        COLOR_SEMAFORO_INFORME[color] +
+        '" title="' +
+        esc(ETIQUETA_SEMAFORO[color]) +
+        '"></span></td>' +
+        '<td class="tcol">' +
+        esc(t.nombre) +
+        '<div class="tr-sub">' +
+        esc(t.entidad || "Sin entidad") +
+        (t.radicado ? " &middot; Radicado " + esc(t.radicado) : "") +
+        "</div></td>" +
+        '<td><span class="pill" style="background:' +
+        (COLOR_ESTADO_TRAMITE[t.estado] ?? "#64748b") +
+        '">' +
+        esc(t.estado) +
+        "</span></td>" +
+        "<td>" +
+        (t.fechaLimite ? esc(fechaLegible(t.fechaLimite)) : "—") +
+        "</td>" +
+        '<td class="hcol">' +
+        plazo(t) +
+        "</td>" +
+        "<td>" +
+        esc(t.responsable || "—") +
+        "</td>" +
+        "</tr>"
+      );
+    })
+    .join("");
+
+  return (
+    cabecera +
+    '<div class="tr-nota">Estado a la fecha de generacion de este informe, no a la fecha reportada arriba.</div>' +
+    "<table><thead><tr>" +
+    '<th class="lcol"></th><th class="tcol">Tramite</th><th>Estado</th><th>Vence</th><th class="hcol">Plazo</th><th>Responsable</th>' +
+    "</tr></thead><tbody>" +
+    filas +
+    "</tbody></table></section>"
+  );
+}
+
 function construirInformeHTML(
   proyecto: Proyecto,
   tareas: Tarea[],
@@ -91,6 +197,7 @@ function construirInformeHTML(
   respFiltro: string,
   actividad: Record<string, FilaActividad[]>,
   jornadasPorResp: Map<string, Jornada[]>,
+  tramites: Tramite[],
 ): string {
   let responsables = Object.keys(actividad).sort();
   if (respFiltro) responsables = responsables.filter((r) => r === respFiltro);
@@ -128,6 +235,16 @@ function construirInformeHTML(
     totalTareas += actividad[r].length;
     actividad[r].forEach((row) => (totalRegistros += row.registros));
   });
+
+  // El semaforo resume la cartera en una palabra; el detalle va en su propio bloque.
+  const colorTramites = semaforoProyecto(tramites);
+  const chipTramites = colorTramites
+    ? '<div class="chip">Tramites<b style="color:' +
+      COLOR_SEMAFORO_INFORME[colorTramites] +
+      '">' +
+      esc(ETIQUETA_SEMAFORO[colorTramites]) +
+      "</b></div>"
+    : "";
 
   let body: string;
   if (responsables.length === 0) {
@@ -206,6 +323,12 @@ function construirInformeHTML(
     `.tcol{width:34%}.acol{white-space:nowrap}.hcol{white-space:nowrap;text-align:right;color:#6b7280}` +
     `.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff}` +
     `.delta{font-weight:700;margin-left:4px}.delta.up{color:#16a34a}.delta.down{color:#dc2626}` +
+    `.tramites{margin-top:22px;break-inside:avoid}` +
+    `.tramites h2{font-size:14px;margin:0 0 4px}` +
+    `.tr-nota{font-size:10.5px;color:#6b7280;margin-bottom:8px}` +
+    `.tr-sub{font-size:10.5px;color:#6b7280;margin-top:2px}` +
+    `.lcol{width:18px}.luz{display:inline-block;width:9px;height:9px;border-radius:50%}` +
+    `.tr-critico{color:#dc2626;font-weight:700}.tr-alerta{color:#b45309;font-weight:600}` +
     `.empty{padding:30px;text-align:center;color:#6b7280;background:#f8fafc;border-radius:10px}` +
     `.sinact{margin-top:14px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:11.5px;color:#9a3412}` +
     `.sinjornada{color:#9ca3af;font-style:italic}` +
@@ -225,8 +348,10 @@ function construirInformeHTML(
     `<div class="chip">Trabajadores activos<b>${responsables.length}</b></div>` +
     `<div class="chip">Tareas con avance<b>${totalTareas}</b></div>` +
     `<div class="chip">Registros del día<b>${totalRegistros}</b></div>` +
+    chipTramites +
     `</div>` +
     body +
+    construirBloqueTramites(tramites) +
     pie +
     `<div class="report-foot">Generado el ${esc(generado)} · MEP Manager</div>` +
     `<script>window.onload=function(){setTimeout(function(){window.print();},450);};</script>` +
@@ -243,9 +368,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const respFiltro = searchParams.get("resp") || "";
 
   const proyectoRef = adminDb.doc(`proyectos/${id}`);
-  const [proyectoSnap, tareasSnap, jornadasSnap] = await Promise.all([
+  const [proyectoSnap, tareasSnap, tramitesSnap, jornadasSnap] = await Promise.all([
     proyectoRef.get(),
     proyectoRef.collection("tareas").get(),
+    proyectoRef.collection("tramites").get(),
     adminDb.collection("jornadas").where("proyectoId", "==", id).where("fecha", "==", fecha).get(),
   ]);
 
@@ -255,6 +381,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const proyecto = proyectoSnap.data() as Proyecto;
   const tareas = tareasSnap.docs.map((d) => d.data() as Tarea);
+  const tramites = tramitesSnap.docs.map((d) => d.data() as Tramite);
   // Las jornadas del equipo son dato reservado a gestores (misma regla que /jornadas):
   // quien no pueda verlas recibe el informe con su propia jornada únicamente.
   const todasLasJornadas = jornadasSnap.docs.map((d) => d.data() as Jornada);
@@ -271,7 +398,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   for (const lista of jornadasPorResp.values()) lista.sort((a, b) => a.entrada - b.entrada);
 
   const actividad = recolectarActividadDelDia(tareas, fecha);
-  const html = construirInformeHTML(proyecto, tareas, fecha, respFiltro, actividad, jornadasPorResp);
+  const html = construirInformeHTML(proyecto, tareas, fecha, respFiltro, actividad, jornadasPorResp, tramites);
 
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
 }

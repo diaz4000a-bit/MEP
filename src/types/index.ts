@@ -44,6 +44,22 @@ export interface Proyecto {
   totalTareas: number;
   tareasCompletadas: number;
   avanceTotal: number;         // 0-100
+  /*
+   * Denormalizados de la subcolección `tramites`, para pintar el semáforo en la lista de
+   * proyectos sin leer N subcolecciones. El COLOR no se guarda: depende del día de hoy y
+   * quedaría desfasado sin ninguna escritura de por medio. Se guardan los cuatro datos
+   * intemporales con los que `semaforoProyectoResumen` lo recalcula en cada render.
+   *
+   * OPCIONALES a propósito: los proyectos creados antes de la sección de trámites no los
+   * traen y deben seguir leyéndose sin migración (mismo criterio que `NotaIngenieria.url`).
+   */
+  totalTramites?: number;
+  tramitesAbiertos?: number;
+  tramitesRechazados?: number;
+  /** Abiertos que están en ámbar por naturaleza: en subsanación o sin fecha comprometida. */
+  tramitesEnAlerta?: number;
+  /** Menor fecha límite entre los trámites abiertos. "" si ninguno tiene fecha. */
+  proximoVencimiento?: string;
 }
 
 export interface NotaIngenieria {
@@ -211,4 +227,57 @@ export interface Leccion {
   buenasPracticas: string[];
   ejemploAplicado: string;
   tareasRelacionadas: string[];  // plantillaId[] — obligatorio, mínimo 1
+}
+
+/* ── Trámites ──────────────────────────────────────────────────────────────────
+ * Gestión externa del proyecto: lo que depende de un tercero (operador de red,
+ * curaduría, organismo de inspección, bomberos) y no de horas de modelado. Vive
+ * en `proyectos/{id}/tramites/{tramiteId}`, en paralelo a `tareas`.
+ */
+
+/**
+ * Seis estados, no más: cada uno debe tener un color propio en la torta y los colores
+ * semánticos disponibles en ambos temas son seis. "Radicado" cubre también "en revisión"
+ * por la entidad — desde fuera son indistinguibles hasta que hay respuesta.
+ */
+export type EstadoTramite =
+  | 'Sin iniciar'
+  | 'En preparación'
+  | 'Radicado'
+  | 'Subsanación'      // la entidad devolvió con observaciones y corre un plazo para responder
+  | 'Aprobado'
+  | 'Rechazado';
+
+export type TipoTramite =
+  | 'Disponibilidad de servicio'
+  | 'Aprobación de proyecto ante OR'
+  | 'Certificación RETIE'
+  | 'Certificación RETILAP'
+  | 'Licencia de construcción'
+  | 'Permiso de conexión'
+  | 'Legalización y puesta en servicio'
+  | 'Aprobación de alumbrado público'
+  | 'Concepto de bomberos'
+  | 'Otro';
+
+/** Documento en `proyectos/{id}/tramites/{tramiteId}`. */
+export interface Tramite {
+  id: string;
+  proyectoId: string;
+  nombre: string;
+  tipo: TipoTramite;
+  entidad: string;             // 'EPM', 'Curaduría Urbana 2', 'Organismo de inspección…'
+  radicado: string;            // número de radicado ante la entidad
+  estado: EstadoTramite;
+  responsableUid: string | null;
+  responsable: string;         // nombre libre; fallback si no hay uid (igual que en Tarea)
+  fechaRadicacion: string;     // 'YYYY-MM-DD'
+  /** Fecha comprometida de respuesta. Es la que manda el semáforo. */
+  fechaLimite: string;
+  fechaResolucion: string;     // día en que quedó Aprobado o Rechazado
+  costo: number;               // COP
+  notas: string;
+  historial: { f: number; e: EstadoTramite }[];  // tope 60, igual que en Tarea
+  creado: number;
+  actualizado: number;
 }

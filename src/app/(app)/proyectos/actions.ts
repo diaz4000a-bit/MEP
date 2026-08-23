@@ -10,6 +10,7 @@ import { catalogoVigente } from "@/lib/catalogo-vigente";
 import { adminDb } from "@/lib/firebase/admin";
 import { inferirGrupoYSubgrupo, inferirPlantillaId } from "@/lib/importar";
 import { computeAvance } from "@/lib/tareas";
+import { metricasTramites } from "@/lib/tramites";
 import { fechaBogota } from "@/lib/tiempo";
 import {
   ESTADOS_TAREA,
@@ -59,6 +60,9 @@ function proyectoBase(id: string, datos: DatosProyecto, ahora: number): Proyecto
     totalTareas: 0,
     tareasCompletadas: 0,
     avanceTotal: 0,
+    // Métricas de trámites en cero desde el minuto uno. Son opcionales en el tipo para no
+    // romper los proyectos anteriores a la sección, pero los nuevos nacen con ellas puestas.
+    ...metricasTramites([]),
   };
 }
 
@@ -174,13 +178,20 @@ export async function eliminarProyecto(proyectoId: string) {
   await exigirPermiso(usuario, "borrarProyecto");
 
   const proyectoRef = adminDb.doc(`proyectos/${proyectoId}`);
-  const tareasSnap = await proyectoRef.collection("tareas").get();
+  const [tareasSnap, tramitesSnap] = await Promise.all([
+    proyectoRef.collection("tareas").get(),
+    proyectoRef.collection("tramites").get(),
+  ]);
 
   // Un WriteBatch admite como máximo 500 operaciones: un proyecto de plantilla completa ya
   // ronda las 200 tareas y uno importado puede pasar de 500, con lo que el batch entero
-  // fallaba. Las tareas primero y el proyecto al final: si un lote falla, queda el proyecto
-  // con tareas de menos (visible y recuperable) y no una subcolección sin proyecto padre.
-  for (const lote of trocear(tareasSnap.docs)) {
+  // fallaba. Las subcolecciones primero y el proyecto al final: si un lote falla, queda el
+  // proyecto con documentos de menos (visible y recuperable) y no una subcolección huérfana.
+  //
+  // Los trámites van aquí junto a las tareas porque Firestore NO borra en cascada: al
+  // eliminar el documento del proyecto, su subcolección sobrevive intacta e inalcanzable
+  // desde la app — datos del cliente que nadie puede ya consultar ni borrar.
+  for (const lote of trocear([...tareasSnap.docs, ...tramitesSnap.docs])) {
     const batch = adminDb.batch();
     for (const doc of lote) batch.delete(doc.ref);
     await batch.commit();
@@ -643,6 +654,9 @@ export async function importarProyectoJSON(datos: unknown) {
     totalTareas: tareasCreadas.length,
     tareasCompletadas: tareasCreadas.filter((t) => t.estado === "Completada").length,
     avanceTotal: computeAvance(tareasCreadas),
+    // El formato de importación de la v1 no trae trámites: el proyecto entra con la cartera
+    // vacía y se gestiona desde la sección, no desde el archivo.
+    ...metricasTramites([]),
   };
 
   await crearProyectoConTareas(proyectoRef, proyecto, tareasAEscribir);

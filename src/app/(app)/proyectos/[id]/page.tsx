@@ -2,21 +2,25 @@ import { notFound } from "next/navigation";
 import { ProyectoHeader } from "@/components/proyectos/proyecto-header";
 import { ProyectoStats } from "@/components/proyectos/proyecto-stats";
 import { ProyectoTimeline } from "@/components/proyectos/proyecto-timeline";
+import { TramitesCard } from "@/components/proyectos/tramites-card";
 import { ZonasCard } from "@/components/proyectos/zonas-card";
 import { TareasTabla } from "@/components/tareas/tareas-tabla";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
 import { adminDb } from "@/lib/firebase/admin";
-import type { Proyecto, Tarea, Usuario } from "@/types";
+import type { Proyecto, Tarea, Tramite, Usuario } from "@/types";
 
 export default async function ProyectoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const usuario = await exigirUsuario();
 
   const proyectoRef = adminDb.doc(`proyectos/${id}`);
-  const [proyectoSnap, tareasSnap, usuariosSnap, equipoSnap] = await Promise.all([
+  const [proyectoSnap, tareasSnap, tramitesSnap, usuariosSnap, equipoSnap] = await Promise.all([
     proyectoRef.get(),
     proyectoRef.collection("tareas").orderBy("actualizado", "desc").get(),
+    // Los trámites son una subcolección aparte y no cuentan para el avance del proyecto:
+    // se leen en el mismo viaje que las tareas para no encadenar dos esperas a Firestore.
+    proyectoRef.collection("tramites").orderBy("creado", "desc").get(),
     adminDb.collection("usuarios").where("activo", "==", true).get(),
     adminDb.doc("config/equipo").get(),
   ]);
@@ -25,6 +29,7 @@ export default async function ProyectoDetallePage({ params }: { params: Promise<
 
   const proyecto = proyectoSnap.data() as Proyecto;
   const tareas = tareasSnap.docs.map((d) => d.data() as Tarea);
+  const tramites = tramitesSnap.docs.map((d) => d.data() as Tramite);
   const usuarios = usuariosSnap.docs.map((d) => d.data() as Usuario).sort((a, b) => a.nombre.localeCompare(b.nombre));
   const membersLegacy = (equipoSnap.data()?.membersLegacy as string[] | undefined) ?? [];
 
@@ -52,6 +57,12 @@ export default async function ProyectoDetallePage({ params }: { params: Promise<
         zonas={proyecto.zonas ?? []}
         tareas={tareas}
         puedeGestionar={puede(usuario.rol, "crearProyecto")}
+      />
+      <TramitesCard
+        proyectoId={id}
+        tramites={tramites}
+        responsablesDisponibles={responsablesDisponibles}
+        puedeGestionar={puede(usuario.rol, "gestionarTramites")}
       />
       <ProyectoStats
         proyectoId={id}

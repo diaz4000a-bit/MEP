@@ -14,6 +14,10 @@ export const ACCIONES = {
   crearTarea: ['admin', 'coordinador', 'ingeniero', 'modelador'],
   eliminarTarea: ['admin', 'coordinador', 'ingeniero'],
   editarTareaAjena: ['admin', 'coordinador', 'ingeniero', 'modelador'],
+  // Los trámites son gestión externa (operador de red, curaduría, organismo de inspección):
+  // los lleva quien responde ante el cliente, no quien modela. Por eso NO incluye modelador,
+  // a diferencia de las acciones sobre tareas.
+  gestionarTramites: ['admin', 'coordinador', 'ingeniero'],
   editarTareaPropia: ['admin', 'coordinador', 'ingeniero', 'modelador'],
   verJornadasAjenas: ['admin', 'coordinador', 'ingeniero'],
   gestionarUsuarios: ['admin'],
