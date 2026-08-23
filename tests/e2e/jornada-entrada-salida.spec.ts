@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { ADMIN_E2E, PASSWORD_E2E } from "./fixtures/usuarios";
-import { login } from "./helpers";
+import { esperarHidratacionProyectos, login } from "./helpers";
 
 /**
  * Registra entrada y salida de jornada desde la barra global (BarraJornada, presente en toda
@@ -12,6 +12,7 @@ const PROYECTO = { nombre: "Proyecto E2E Jornada", tareas: [] };
 test("registrar entrada y salida de jornada actualiza la barra en tiempo real", async ({ page }) => {
   await login(page, ADMIN_E2E.email, PASSWORD_E2E);
   await page.goto("/proyectos");
+  await esperarHidratacionProyectos(page);
 
   await page.locator('input[type="file"]').setInputFiles({
     name: "jornada.json",
