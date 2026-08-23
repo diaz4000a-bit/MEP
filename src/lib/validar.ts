@@ -1,6 +1,6 @@
 import { CATEGORIAS } from "@/content/categorias";
 import { GRUPOS } from "@/content/grupos";
-import { ESTADOS_TRAMITE, TIPOS_TRAMITE } from "@/content/tramites";
+import { ESTADOS_TRAMITE, ESTADOS_TRAMITE_RADICADOS, TIPOS_TRAMITE } from "@/content/tramites";
 import type {
   Categoria,
   EstadoTarea,
@@ -287,9 +287,6 @@ export function trocear<T>(items: T[], tam = LIMITE_LOTE_FIRESTORE): T[][] {
 
 /** Cota dura del costo de un trámite, en COP. Por encima de esto el dato es un error de dedo. */
 const MAX_COSTO_TRAMITE = 10_000_000_000;
-
-/** Estados desde los que ya existe una radicación ante la entidad. */
-const ESTADOS_TRAMITE_RADICADOS: EstadoTramite[] = ["Radicado", "Subsanación", "Aprobado", "Rechazado"];
 
 export interface DatosTramite {
   nombre: string;

@@ -33,6 +33,18 @@ export const ESTADOS_TRAMITE: EstadoTramite[] = [
   'Rechazado',
 ];
 
+/**
+ * Estados que implican que YA existe una radicación ante la entidad. Un trámite en
+ * cualquiera de ellos necesita `fechaRadicacion`: es el origen del plazo de respuesta y,
+ * sin ella, el semáforo no tiene contra qué medir.
+ */
+export const ESTADOS_TRAMITE_RADICADOS: EstadoTramite[] = [
+  'Radicado',
+  'Subsanación',
+  'Aprobado',
+  'Rechazado',
+];
+
 export interface FichaTramite {
   tipo: TipoTramite;
   /** Quién resuelve. Texto por defecto, editable: cambia según ciudad y operador de red. */

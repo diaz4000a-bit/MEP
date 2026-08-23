@@ -1,4 +1,4 @@
-import { ESTADOS_TRAMITE, FICHAS_TRAMITE } from "@/content/tramites";
+import { ESTADOS_TRAMITE, ESTADOS_TRAMITE_RADICADOS, FICHAS_TRAMITE } from "@/content/tramites";
 import { diasHasta } from "@/lib/tiempo";
 import type { EstadoTramite, TipoTramite, Tramite } from "@/types";
 
@@ -142,6 +142,24 @@ export function fechaLimiteSugerida(tipo: TipoTramite, fechaRadicacion: string):
   const ms = Date.parse(`${fechaRadicacion}T00:00:00Z`);
   if (Number.isNaN(ms)) return "";
   return new Date(ms + dias * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * Coherencia estado-fecha para un trámite que llega de un JSON importado.
+ *
+ * El archivo puede afirmar "Radicado" sin decir cuándo se radicó. Inventar la fecha seria
+ * fabricar un dato que nadie escribió, y conservar el estado dejaría en Firestore un
+ * documento que viola el invariante que `validarDatosTramite` exige a todo lo demás: al
+ * primer intento de editarlo, la app lo rechazaría y el usuario no podria arreglarlo sin
+ * adivinar la fecha.
+ *
+ * Se degrada el estado a "En preparación", que es lo único que consta con certeza: hay un
+ * trámite y todavía no hay constancia de radicación. Mismo criterio que normalizar una
+ * tarea "Completada al 40%" en vez de rechazar el archivo entero.
+ */
+export function normalizarEstadoImportado(estado: EstadoTramite, fechaRadicacion: string): EstadoTramite {
+  if (!fechaRadicacion && ESTADOS_TRAMITE_RADICADOS.includes(estado)) return "En preparación";
+  return estado;
 }
 
 /** Clases del badge de estado. Mismo lenguaje visual que `ESTILO_ESTADO` de tareas. */

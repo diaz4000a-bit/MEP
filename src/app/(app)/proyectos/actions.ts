@@ -4,13 +4,14 @@ import { FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import { CATEGORIAS } from "@/content/categorias";
 import { GRUPOS } from "@/content/grupos";
+import { ESTADOS_TRAMITE, FICHAS_TRAMITE, TIPOS_TRAMITE } from "@/content/tramites";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { puede } from "@/lib/auth/roles";
 import { catalogoVigente } from "@/lib/catalogo-vigente";
 import { adminDb } from "@/lib/firebase/admin";
 import { inferirGrupoYSubgrupo, inferirPlantillaId } from "@/lib/importar";
 import { computeAvance } from "@/lib/tareas";
-import { metricasTramites } from "@/lib/tramites";
+import { metricasTramites, normalizarEstadoImportado } from "@/lib/tramites";
 import { fechaBogota } from "@/lib/tiempo";
 import {
   ESTADOS_TAREA,
@@ -18,6 +19,7 @@ import {
   TOPE_HISTORIAL,
   type DatosTarea,
   sanearHistorial,
+  sanearHistorialTramite,
   trocear,
   validarDatosProyecto,
   validarDatosTarea,
@@ -33,6 +35,9 @@ import type {
   Prioridad,
   Proyecto,
   Tarea,
+  TipoTramite,
+  Tramite,
+  EstadoTramite,
   Usuario,
 } from "@/types";
 import type { DatosProyecto } from "@/lib/validar";
@@ -82,21 +87,25 @@ export async function crearProyecto(datosCrudos: unknown) {
 /**
  * Crea un proyecto con sus tareas respetando el límite de 500 operaciones por WriteBatch.
  *
- * El documento del proyecto va PRIMERO a propósito: si un lote de tareas falla, queda un
- * proyecto incompleto —visible en la lista y borrable— en vez de una subcolección de tareas
- * colgando de un proyecto que no existe, invisible para la app y para el administrador.
+ * El documento del proyecto va PRIMERO a propósito: si un lote falla, queda un proyecto
+ * incompleto —visible en la lista y borrable— en vez de una subcolección colgando de un
+ * proyecto que no existe, invisible para la app y para el administrador.
  * Si algún lote falla se revierte lo escrito antes de propagar el error.
+ *
+ * Tareas y trámites van en la MISMA cola de lotes: el tope de 500 operaciones es por
+ * WriteBatch, no por subcolección, y trocearlas por separado dejaría pasar un archivo con
+ * 400 tareas y 400 trámites que revienta igual.
  */
-async function crearProyectoConTareas(
+async function crearProyectoConContenido(
   proyectoRef: FirebaseFirestore.DocumentReference,
   proyecto: Proyecto,
-  tareas: { ref: FirebaseFirestore.DocumentReference; datos: Tarea }[],
+  documentos: { ref: FirebaseFirestore.DocumentReference; datos: Tarea | Tramite }[],
 ) {
   await proyectoRef.set(proyecto);
   try {
-    for (const lote of trocear(tareas)) {
+    for (const lote of trocear(documentos)) {
       const batch = adminDb.batch();
-      for (const t of lote) batch.set(t.ref, t.datos);
+      for (const d of lote) batch.set(d.ref, d.datos);
       await batch.commit();
     }
   } catch (err) {
@@ -106,8 +115,11 @@ async function crearProyectoConTareas(
 }
 
 async function eliminarProyectoCompleto(proyectoRef: FirebaseFirestore.DocumentReference) {
-  const tareasSnap = await proyectoRef.collection("tareas").get();
-  for (const lote of trocear(tareasSnap.docs)) {
+  const [tareasSnap, tramitesSnap] = await Promise.all([
+    proyectoRef.collection("tareas").get(),
+    proyectoRef.collection("tramites").get(),
+  ]);
+  for (const lote of trocear([...tareasSnap.docs, ...tramitesSnap.docs])) {
     const batch = adminDb.batch();
     for (const doc of lote) batch.delete(doc.ref);
     await batch.commit();
@@ -167,7 +179,7 @@ export async function crearProyectoDesdeplantilla(datosCrudos: unknown) {
     };
     tareas.push({ ref: tareaRef, datos: tarea });
   }
-  await crearProyectoConTareas(ref, proyecto, tareas);
+  await crearProyectoConContenido(ref, proyecto, tareas);
 
   revalidatePath("/proyectos");
   return { id: ref.id };
@@ -522,6 +534,64 @@ function historialImportado(
   return saneado.length > 0 ? saneado : [{ f: ahora, p: porcentaje, e: estado }];
 }
 
+/** Tope de trámites por import. Una cartera real ronda la decena; esto es el cortafuegos. */
+const MAX_TRAMITES_IMPORT = 500;
+
+/** Cota dura del costo importado, en COP. Espeja la de `validarDatosTramite`. */
+const MAX_COSTO_TRAMITE_IMPORT = 10_000_000_000;
+
+/**
+ * Sanea un trámite del archivo. Mismo criterio que con las tareas: NADA se acepta tal cual.
+ * Tipo y estado pasan por lista blanca, las fechas por `fechaImportada` (que rechaza
+ * 2026-02-31), el costo se acota y el historial pasa por `sanearHistorialTramite`.
+ *
+ * Devuelve `null` si el registro no es ni un objeto: un elemento basura del array no debe
+ * abortar la importación entera.
+ */
+function tramiteImportado(
+  item: unknown,
+  proyectoId: string,
+  id: string,
+  ahora: number,
+  uidsConocidos: Set<string>,
+): Tramite | null {
+  if (typeof item !== "object" || item === null) return null;
+  const t = item as Record<string, unknown>;
+
+  const tipo = TIPOS_TRAMITE.includes(t.tipo as TipoTramite) ? (t.tipo as TipoTramite) : "Otro";
+  const fechaRadicacion = fechaImportada(t.fechaRadicacion);
+  const estadoArchivo = ESTADOS_TRAMITE.includes(t.estado as EstadoTramite)
+    ? (t.estado as EstadoTramite)
+    : "Sin iniciar";
+  // Un "Radicado" sin fecha de radicación se degrada en vez de entrar incoherente; ver
+  // `normalizarEstadoImportado` para el porqué.
+  const estado = normalizarEstadoImportado(estadoArchivo, fechaRadicacion);
+  const cerrado = estado === "Aprobado" || estado === "Rechazado";
+
+  return {
+    id,
+    proyectoId,
+    nombre: strOr(t.nombre, "Trámite sin nombre", 200),
+    tipo,
+    entidad: strOr(t.entidad, FICHAS_TRAMITE[tipo].entidad, 200),
+    radicado: strOr(t.radicado, "", 200),
+    estado,
+    responsableUid:
+      typeof t.responsableUid === "string" && uidsConocidos.has(t.responsableUid) ? t.responsableUid : null,
+    responsable: strOr(t.responsable, "", 200),
+    fechaRadicacion,
+    fechaLimite: fechaImportada(t.fechaLimite),
+    // Solo un trámite cerrado tiene fecha de resolución; si no, la ficha diría "resuelto el
+    // 3 de mayo" sobre un trámite en curso.
+    fechaResolucion: cerrado ? fechaImportada(t.fechaResolucion) : "",
+    costo: Math.min(MAX_COSTO_TRAMITE_IMPORT, Math.max(0, numOr(t.costo, 0))),
+    notas: strOr(t.notas, ""),
+    historial: sanearHistorialTramite(t.historial),
+    creado: ahora,
+    actualizado: ahora,
+  };
+}
+
 /**
  * Acepta el formato v1 (proyecto con `tareas[]` plana) y el de `prompt-incidencias.md`, sin
  * cambios. Regenera ids, infiere `grupo`/`subgrupo`/`plantillaId` cuando el archivo no los
@@ -537,6 +607,12 @@ export async function importarProyectoJSON(datos: unknown) {
   const raw = datos as Record<string, unknown>;
   if (typeof raw.nombre !== "string" || !raw.nombre.trim() || !Array.isArray(raw.tareas)) {
     throw new Error("El archivo no tiene el formato de proyecto esperado.");
+  }
+  const tramitesCrudos = Array.isArray(raw.tramites) ? raw.tramites : [];
+  if (tramitesCrudos.length > MAX_TRAMITES_IMPORT) {
+    throw new Error(
+      `El archivo trae ${tramitesCrudos.length} trámites; el máximo por importación es ${MAX_TRAMITES_IMPORT}.`,
+    );
   }
   if (raw.tareas.length > MAX_TAREAS_IMPORT) {
     throw new Error(`El archivo trae ${raw.tareas.length} tareas; el máximo por importación es ${MAX_TAREAS_IMPORT}.`);
@@ -638,6 +714,17 @@ export async function importarProyectoJSON(datos: unknown) {
     tareasCreadas.push(tarea);
   }
 
+  // `tramites[]` es opcional: los archivos de la v1 no lo traen y entran con cartera vacía.
+  const tramitesCreados: Tramite[] = [];
+  const tramitesAEscribir: { ref: FirebaseFirestore.DocumentReference; datos: Tramite }[] = [];
+  for (const item of tramitesCrudos) {
+    const tramiteRef = proyectoRef.collection("tramites").doc();
+    const tramite = tramiteImportado(item, proyectoRef.id, tramiteRef.id, ahora, uidsConocidos);
+    if (!tramite) continue;
+    tramitesAEscribir.push({ ref: tramiteRef, datos: tramite });
+    tramitesCreados.push(tramite);
+  }
+
   const proyecto: Proyecto = {
     id: proyectoRef.id,
     nombre: strOr(raw.nombre, "Proyecto importado", 200),
@@ -654,18 +741,18 @@ export async function importarProyectoJSON(datos: unknown) {
     totalTareas: tareasCreadas.length,
     tareasCompletadas: tareasCreadas.filter((t) => t.estado === "Completada").length,
     avanceTotal: computeAvance(tareasCreadas),
-    // El formato de importación de la v1 no trae trámites: el proyecto entra con la cartera
-    // vacía y se gestiona desde la sección, no desde el archivo.
-    ...metricasTramites([]),
+    ...metricasTramites(tramitesCreados),
   };
 
-  await crearProyectoConTareas(proyectoRef, proyecto, tareasAEscribir);
+  await crearProyectoConContenido(proyectoRef, proyecto, [...tareasAEscribir, ...tramitesAEscribir]);
 
   // Incorporar responsables nuevos al equipo, igual que hacía la v1 al importar. Va después
   // del proyecto: es un efecto secundario y no debe abortar la importación si falla.
-  const nombresNuevos = [...new Set(tareasCreadas.map((t) => t.responsable).filter(Boolean))].filter(
-    (n) => !nombresConocidos.has(n),
-  );
+  const nombresNuevos = [
+    ...new Set(
+      [...tareasCreadas, ...tramitesCreados].map((x) => x.responsable).filter(Boolean),
+    ),
+  ].filter((n) => !nombresConocidos.has(n));
   if (nombresNuevos.length > 0) {
     await adminDb
       .doc("config/equipo")

@@ -30,9 +30,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   // Mismo formato que la v1: el proyecto lleva `tareas[]` plana, no la subcolección real.
   // `tramites[]` es aditivo y la v1 no lo conocía, así que un consumidor antiguo lo ignora.
-  //
-  // OJO: `importarProyectoJSON` todavía NO lee `tramites[]` — exportar e importar de vuelta
-  // conserva las tareas pero pierde la cartera de trámites.
+  // `importarProyectoJSON` sí lo lee: el viaje de ida y vuelta conserva la cartera.
   const exportado = { ...proyecto, tareas, tramites };
 
   return new Response(JSON.stringify(exportado, null, 2), {
