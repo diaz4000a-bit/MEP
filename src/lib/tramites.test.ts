@@ -7,6 +7,7 @@ import {
   fechaLimiteSugerida,
   metricasTramites,
   motivoSemaforo,
+  normalizarEstadoImportado,
   semaforoProyecto,
   semaforoProyectoResumen,
   semaforoTramite,
@@ -207,5 +208,40 @@ describe("semaforoProyectoResumen", () => {
     ["vacío", []],
   ])("coincide con semaforoProyecto: %s", (_caso, cartera) => {
     expect(semaforoProyectoResumen(metricasTramites(cartera))).toBe(semaforoProyecto(cartera));
+  });
+});
+
+describe("normalizarEstadoImportado", () => {
+  it("degrada a 'En preparación' un estado radicado sin fecha de radicación", () => {
+    // El archivo afirma que se radicó pero no dice cuándo. Inventar la fecha seria fabricar
+    // un dato; conservar el estado dejaria un documento que la propia app no deja editar.
+    expect(normalizarEstadoImportado("Radicado", "")).toBe("En preparación");
+    expect(normalizarEstadoImportado("Subsanación", "")).toBe("En preparación");
+    expect(normalizarEstadoImportado("Aprobado", "")).toBe("En preparación");
+    expect(normalizarEstadoImportado("Rechazado", "")).toBe("En preparación");
+  });
+
+  it("respeta el estado cuando la fecha de radicación viene en el archivo", () => {
+    expect(normalizarEstadoImportado("Radicado", "2026-07-01")).toBe("Radicado");
+    expect(normalizarEstadoImportado("Aprobado", "2026-07-01")).toBe("Aprobado");
+  });
+
+  it("no toca los estados previos a la radicación, que no necesitan fecha", () => {
+    expect(normalizarEstadoImportado("Sin iniciar", "")).toBe("Sin iniciar");
+    expect(normalizarEstadoImportado("En preparación", "")).toBe("En preparación");
+  });
+
+  it("deja el documento importado cumpliendo el invariante que exige el validador", () => {
+    // La propiedad que importa: tras normalizar, ningún estado radicado se queda sin fecha.
+    const casos: [EstadoTramite, string][] = [
+      ["Radicado", ""],
+      ["Aprobado", ""],
+      ["Radicado", "2026-07-01"],
+    ];
+    for (const [estado, fecha] of casos) {
+      const normalizado = normalizarEstadoImportado(estado, fecha);
+      const exigeFecha = ["Radicado", "Subsanación", "Aprobado", "Rechazado"].includes(normalizado);
+      expect(exigeFecha && !fecha).toBe(false);
+    }
   });
 });

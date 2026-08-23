@@ -6,7 +6,7 @@ vi.mock("@/lib/auth/sesion", () => ({ exigirUsuario: vi.fn() }));
 import { importarProyectoJSON } from "@/app/(app)/proyectos/actions";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { adminDb } from "@/lib/firebase/admin";
-import type { Proyecto, Rol, Tarea } from "@/types";
+import type { Proyecto, Rol, Tarea, Tramite } from "@/types";
 import { limpiarFirestore, seedUsuario, usuarioFalso } from "./helpers/proyectos";
 
 /**
@@ -232,5 +232,107 @@ describe("notasIngenieria", () => {
     const notas = (await leerProyectoImportado()).tareas[0].notasIngenieria ?? [];
     expect(notas).toHaveLength(1);
     expect(notas[0].url).toBe("https://ejemplo.com/norma.pdf#page=5");
+  });
+});
+
+async function leerTramitesImportados(): Promise<Tramite[]> {
+  const proyectosSnap = await adminDb.collection("proyectos").get();
+  const tramitesSnap = await proyectosSnap.docs[0].ref.collection("tramites").get();
+  return tramitesSnap.docs.map((d) => d.data() as Tramite);
+}
+
+describe("trámites importados", () => {
+  it("un archivo de la v1 sin tramites[] entra con la cartera vacía", async () => {
+    comoRol("admin");
+    await importarProyectoJSON({ nombre: "Legado", tareas: [{ nombre: "T1" }] });
+
+    const { proyecto } = await leerProyectoImportado();
+    expect(await leerTramitesImportados()).toEqual([]);
+    expect(proyecto.totalTramites).toBe(0);
+    expect(proyecto.proximoVencimiento).toBe("");
+  });
+
+  it("crea la subcolección y deja las métricas del proyecto cuadradas", async () => {
+    comoRol("admin");
+    await importarProyectoJSON({
+      nombre: "Con trámites",
+      tareas: [],
+      tramites: [
+        { nombre: "Disponibilidad", estado: "Radicado", fechaRadicacion: "2026-07-01", fechaLimite: "2026-09-30" },
+        { nombre: "RETIE", estado: "Rechazado", fechaRadicacion: "2026-06-01" },
+        { nombre: "Bomberos", estado: "Sin iniciar" },
+      ],
+    });
+
+    const tramites = await leerTramitesImportados();
+    const { proyecto } = await leerProyectoImportado();
+    expect(tramites).toHaveLength(3);
+    expect(proyecto.totalTramites).toBe(3);
+    expect(proyecto.tramitesAbiertos).toBe(2); // el rechazado está cerrado
+    expect(proyecto.tramitesRechazados).toBe(1);
+    expect(proyecto.tramitesEnAlerta).toBe(1); // "Bomberos", abierto y sin fecha
+    expect(proyecto.proximoVencimiento).toBe("2026-09-30");
+  });
+
+  it("degrada un estado radicado que llega sin fecha de radicación", async () => {
+    comoRol("admin");
+    await importarProyectoJSON({
+      nombre: "Incoherente",
+      tareas: [],
+      // El archivo afirma que está aprobado pero no dice cuándo se radicó.
+      tramites: [{ nombre: "Sin fecha", estado: "Aprobado", fechaResolucion: "2026-05-03" }],
+    });
+
+    const [tramite] = await leerTramitesImportados();
+    expect(tramite.estado).toBe("En preparación");
+    // Al dejar de estar cerrado, la fecha de resolución no puede sobrevivir.
+    expect(tramite.fechaResolucion).toBe("");
+  });
+
+  it("cae a la lista blanca con un tipo y un estado inventados", async () => {
+    comoRol("admin");
+    await importarProyectoJSON({
+      nombre: "Basura",
+      tareas: [],
+      tramites: [{ nombre: "Raro", tipo: "Licencia intergaláctica", estado: "Traspapelado" }],
+    });
+
+    const [tramite] = await leerTramitesImportados();
+    expect(tramite.tipo).toBe("Otro");
+    expect(tramite.estado).toBe("Sin iniciar");
+  });
+
+  it("descarta fechas inexistentes, costos negativos y responsableUid inventado", async () => {
+    comoRol("admin");
+    await importarProyectoJSON({
+      nombre: "Adversarial",
+      tareas: [],
+      tramites: [
+        {
+          nombre: "Sucio",
+          estado: "Radicado",
+          fechaRadicacion: "2026-07-01",
+          fechaLimite: "2026-02-31", // no existe: new Date la normalizaría al 3 de marzo
+          costo: -5000,
+          responsableUid: "uid-que-no-existe",
+          historial: [{ f: "no soy número", e: "Radicado" }],
+        },
+      ],
+    });
+
+    const [tramite] = await leerTramitesImportados();
+    expect(tramite.fechaLimite).toBe("");
+    expect(tramite.costo).toBe(0);
+    expect(tramite.responsableUid).toBeNull();
+    expect(tramite.historial).toEqual([]);
+  });
+
+  it("rechaza un archivo por encima del máximo de trámites, sin escribir nada", async () => {
+    comoRol("admin");
+    const tramites = Array.from({ length: 501 }, () => ({ nombre: "x" }));
+    await expect(importarProyectoJSON({ nombre: "Enorme", tareas: [], tramites })).rejects.toThrow(
+      "máximo por importación",
+    );
+    expect((await adminDb.collection("proyectos").get()).size).toBe(0);
   });
 });
