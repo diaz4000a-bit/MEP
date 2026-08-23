@@ -27,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", Icon: icono("ti-layout-dashboard") },
   { href: "/mi-trabajo", label: "Mi trabajo", Icon: icono("ti-clipboard-list") },
   { href: "/proyectos", label: "Proyectos", Icon: icono("ti-folders") },
+  { href: "/calendario", label: "Calendario", Icon: icono("ti-calendar-event") },
   { href: "/jornadas", label: "Jornadas", Icon: icono("ti-clock-hour-4") },
   { href: "/guia", label: "Guía", Icon: icono("ti-school") },
   { href: "/equipo", label: "Equipo", Icon: icono("ti-users") },
