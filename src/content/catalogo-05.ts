@@ -42,6 +42,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Una canalización discontinua en el modelo suele traducirse en cantidades incompletas y en un montaje improvisado en obra; la continuidad mecánica de la canalización es además un requisito de instalación.', REF.CANALIZACIONES),
+      notaNorma('Cuando la canalización metálica hace de conductor de puesta a tierra, un tramo discontinuo rompe el camino efectivo de falla que exige el Art. 250-51 de la NTC 2050: la protección tarda más en despejar o no despeja.', REF.NTC_CAMINO_TIERRA),
     ],
     tipsRevit: [
       'Usa Vista > Aislar categoría temporalmente para mostrar solo Conductos eléctricos y Bandejas de cables.',
@@ -89,6 +90,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('Un circuito sin protección asignada en el modelo produce un cuadro de cargas incompleto y una demanda subestimada; todo circuito debe quedar protegido contra sobrecorrientes.', REF.SOBRECORRIENTES),
+      notaNorma('Todo circuito ramal debe tener protección contra sobrecorriente en su origen, dimensionada según el Art. 210-20 de la NTC 2050 y con un valor nominal normalizado del Art. 240-6.', REF.NTC_PROTECCION_RAMAL),
     ],
     tipsRevit: [
       'Usa Sistemas > Eléctrico > Explorador de sistemas para navegar por panel y circuito.',
@@ -136,6 +138,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('La conexión entre la red interna y la red del operador se rige por los requisitos de acometidas del RETIE y por la norma del operador de red de la zona.', REF.ACOMETIDAS),
+      notaNorma('El punto exacto de frontera y el tipo de conexión los fija la norma del operador de red; en territorio de Enel Colombia son las fichas de acometidas eléctricas de Likinormas.', REF.LK_GENERALIDADES_ACOMETIDAS),
     ],
     tipsRevit: [
       'Usa Copiar/Monitorear o un vínculo visible para superponer el modelo de urbanismo sobre el eléctrico.',
@@ -183,6 +186,8 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Las cajas y conduletas deben permanecer accesibles y respetar su capacidad; un enrutamiento que las deja tapadas o sobrecargadas incumple aunque el modelo cierre.', REF.CAJAS_CONDULETAS),
+      notaNormaVerificar('La capacidad de la caja se verifica contando conductores, dispositivos y accesorios según el Art. 370-16 de la NTC 2050; el enrutamiento del modelo tiene que caber en ese volumen.', REF.NTC_VOLUMEN_CAJAS),
+      notaNorma('El Art. 370-29 exige que las cajas de paso y empalme queden accesibles sin romper acabados: una caja que el modelo deja sobre un cielo fijo es un hallazgo de inspección.', REF.NTC_CAJAS_ACCESIBLES),
     ],
     tipsRevit: [
       'Selecciona el circuito y usa "Mostrar recorrido de conductos" en la cinta Sistemas eléctricos.',
@@ -230,6 +235,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('La acometida debe corresponder a lo aprobado por el operador de red y a los requisitos del RETIE; una diferencia entre lo modelado y lo aprobado bloquea la energización.', REF.ACOMETIDAS),
+      notaNorma('Además de lo aprobado por el operador, la acometida tiene requisitos propios en la Sección 230 de la NTC 2050: número de acometidas por edificación, calibre mínimo y medios de desconexión.', REF.NTC_ACOMETIDAS),
     ],
     tipsRevit: [
       'Usa el parámetro "Tipo de conductor" en las propiedades de instancia para comparar contra la memoria de cálculo.',
@@ -277,6 +283,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Las salidas de comunicaciones que alimentan equipo activo requieren una toma con polo a tierra próxima; el requisito de instalación de esa toma es el del artículo de clavijas y tomacorrientes.', REF.TOMACORRIENTES),
+      notaNorma('Los circuitos de comunicaciones tienen artículo propio en la NTC 2050 (Artículo 800): separación respecto de los circuitos de fuerza, protección y puesta a tierra del cable.', REF.NTC_COMUNICACIONES),
     ],
     tipsRevit: [
       'Usa Filtros de vista para colorear por separado las categorías Datos y Tomacorrientes.',
@@ -323,6 +330,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('El punto de acceso al usuario aloja equipo activo permanente y requiere toma dedicada con polo a tierra; compartirla con otros usos deja el servicio expuesto a desconexiones accidentales.', REF.TOMACORRIENTES),
+      notaNorma('El PAU de una vivienda concentra circuitos de comunicaciones y de televisión: aplican el Artículo 800 y, para el coaxial de TV, el Artículo 820 de la NTC 2050, con su exigencia de puesta a tierra del blindaje.', REF.NTC_TV),
     ],
     tipsRevit: [
       'Filtra la vista por la categoría del gabinete PAU si está modelado como familia propia.',
@@ -370,6 +378,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('La sección del ducto debe corresponder al porcentaje máximo de ocupación calculado para sus conductores; un ducto subdimensionado obliga a rehacer la canalización en obra.', REF.CANALIZACIONES),
+      notaNormaVerificar('El porcentaje máximo admisible está en el Cuadro 1 del Capítulo 9 de la NTC 2050 y el número de conductores por diámetro, en los cuadros del Anexo C: la verificación se hace contra esos cuadros, no contra la sección dibujada.', REF.NTC_OCUPACION_TUBERIA),
     ],
     tipsRevit: [
       'Crea una tabla de planificación de la categoría Bandejas de cables con los campos Ancho, Alto y Nivel.',
@@ -417,6 +426,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('La señalización de evacuación retroiluminada forma parte del sistema de emergencia y debe alimentarse desde la fuente de respaldo, no desde el circuito de alumbrado normal.', REF.SISTEMAS_EMERGENCIA),
+      notaNorma('Al pertenecer al sistema de emergencia, su alambrado debe ser independiente del normal según la Sección 700 de la NTC 2050, y no puede compartir canalización con el alumbrado general de la circulación.', REF.NTC_EMERGENCIA),
       notaNormaVerificar('La autonomía y la iluminancia exigidas a la señalización de evacuación las fija el RETILAP; confirmar los valores aplicables al proyecto.', REF.ILUM_EMERGENCIA),
     ],
     tipsRevit: [
@@ -464,6 +474,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Un electroimán de control de acceso en una ruta de evacuación debe liberar la puerta al faltar la energía o al activarse la alarma; su alimentación debe estar coordinada con el sistema de emergencia y no ser un circuito cualquiera.', REF.SISTEMAS_EMERGENCIA),
+      notaNormaVerificar('El electroimán se alimenta desde el sistema de emergencia y su circuito de control suele ser Clase 2: el Art. 725 de la NTC 2050 fija cómo se separa ese cableado del de fuerza dentro de la misma canalización.', REF.NTC_CLASE_1_2_3),
     ],
     tipsRevit: [
       'Usa el parámetro compartido "Uso" en la familia de tomacorriente para marcar las destinadas a control de acceso.',
@@ -510,6 +521,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Las talanqueras y accesos motorizados son cargas con motor: su protección y su medio de desconexión siguen los requisitos del artículo de motores del RETIE, no los de una carga resistiva.', REF.MOTORES_GRUPOS),
+      notaNormaVerificar('El circuito, la protección contra sobrecarga y el medio de desconexión a la vista del motor se dimensionan por la Sección 430 de la NTC 2050, partiendo de la corriente de placa del equipo.', REF.NTC_MOTORES),
     ],
     tipsRevit: [
       'Vincula el plano de seguridad como CAD para ubicar con precisión cada talanquera.',
@@ -557,6 +569,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Los motores de puertas vehiculares requieren medio de desconexión accesible y protección acorde a su corriente de arranque, según los requisitos de motores del RETIE.', REF.MOTORES_GRUPOS),
+      notaNorma('El medio de desconexión a la vista del motor y sus características están reglados en la Sección 430 de la NTC 2050: es un requisito de seguridad para el mantenimiento, no una comodidad de operación.', REF.NTC_MOTORES),
     ],
     tipsRevit: [
       'Revisa el parámetro "Carga aparente" del circuito asignado al motor y compáralo con la ficha técnica.',
@@ -603,6 +616,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Las cámaras y el equipo de grabación del CCTV requieren tomas con polo a tierra y, cuando el servicio es crítico, respaldo; la toma debe cumplir el artículo de clavijas y tomacorrientes.', REF.TOMACORRIENTES),
+      notaNorma('El cableado de las cámaras suele ser de potencia limitada: la Sección 725 de la NTC 2050 regula su separación respecto de los conductores de fuerza dentro de canalizaciones y cajas.', REF.NTC_CLASE_1_2_3),
     ],
     tipsRevit: [
       'Vincula el plano de seguridad electrónica como CAD para ubicar con precisión cada cámara.',
@@ -649,6 +663,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('La iluminación de vallas y letreros exteriores está sujeta a los requisitos de iluminación exterior y de control de contaminación lumínica del RETILAP.', REF.ILUM_EXTERIOR),
+      notaNorma('El circuito que sale de la edificación hacia la valla se rige por la Sección 225 de la NTC 2050: calibre mínimo, altura sobre el suelo y protección del tramo exterior.', REF.NTC_EXTERIORES),
     ],
     tipsRevit: [
       'Filtra la vista de alumbrado exterior por el parámetro "Uso: Señalización" si está definido como parámetro compartido.',
@@ -695,6 +710,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('La iluminación de señalización y nomenclatura en exteriores se rige por los requisitos de iluminación exterior del RETILAP.', REF.ILUM_EXTERIOR),
+      notaNorma('Igual que cualquier circuito exterior, aplica la Sección 225 de la NTC 2050; y si la salida queda expuesta a la intemperie, el tomacorriente o la caja deben cumplir el Art. 410-57.', REF.NTC_TOMAS_HUMEDOS),
     ],
     tipsRevit: [
       'Filtra la vista de alumbrado exterior por el parámetro "Uso: Nomenclatura" si está definido como parámetro compartido.',
@@ -790,6 +806,7 @@ export const CATALOGO_05: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Los tableros y circuitos deben quedar identificados de forma inequívoca; dos tableros con el mismo nombre en el modelo producen un cuadro de cargas ambiguo que no sirve para operar la instalación.', REF.CELDAS_TABLEROS),
+      notaNorma('La NTC 2050 exige que cada medio de desconexión indique su carga (Art. 110-22) y que el rotulado sea legible y duradero (Art. 110-21): la nomenclatura del modelo es la que termina impresa en el directorio del tablero.', REF.NTC_IDENT_DESCONEXION),
     ],
     tipsRevit: [
       'Usa una tabla de planificación de "Familias y tipos" con el campo Nombre para revisar en bloque.',

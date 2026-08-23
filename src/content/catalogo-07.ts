@@ -1,4 +1,4 @@
-import { REF, notaCriterio, notaNorma } from './normas';
+import { REF, notaCriterio, notaNorma, notaNormaVerificar } from './normas';
 import type { TareaCatalogo } from '../types';
 
 export const CATALOGO_07: TareaCatalogo[] = [
@@ -54,6 +54,7 @@ export const CATALOGO_07: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Las incidencias que afectan requisitos del reglamento no se cierran por acuerdo de obra: deben resolverse antes de la revisión de la instalación, porque son las que bloquean la conformidad.', REF.REVISION_INSTALACIONES),
+      notaNormaVerificar('Al triar conviene anotar contra qué norma incumple cada incidencia: el RETIE cubre el requisito de seguridad y la NTC 2050 el dimensionamiento (cargas por la Sección 220, capacidad de corriente por el Art. 310-15, cajas por el Art. 370-16, puesta a tierra por la Sección 250). Sin esa precisión, la incidencia vuelve sin criterio de cierre.', REF.NTC_CALCULO_RAMALES),
       notaCriterio('Conviene marcar desde el triaje qué incidencias tienen implicación normativa y cuáles son de coordinación, porque su ruta de cierre y su urgencia son distintas.'),
     ],
     tipsRevit: [

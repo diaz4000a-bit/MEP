@@ -80,6 +80,9 @@ export const DOMINIOS_NORMA_PERMITIDOS: readonly string[] = [
   'www.minenergia.gov.co',
   'ebooks.icontec.org',
   'www.icontec.org',
+  // Norma del operador de red. Ver el bloque LK_* mas abajo: aplica solo al territorio
+  // de Enel Colombia (Bogota y Cundinamarca).
+  'likinormas.enelcol.com.co',
 ];
 
 function retie(libro: 'L1' | 'L2' | 'L3' | 'L4', aparte: string, pagina: number): ReferenciaNorma {
@@ -94,6 +97,48 @@ function retilap(libro: 'L2' | 'L3', aparte: string, pagina: number): Referencia
     fuente: `RETILAP (Res. 40286 de 2026) — Libro ${libro.slice(1)}, ${aparte}`,
     url: `${URL_RETILAP_LIBRO[libro]}#page=${pagina}`,
   };
+}
+
+/**
+ * NTC 2050 — Código Eléctrico Colombiano (ICONTEC).
+ *
+ * El RETIE fija QUÉ hay que cumplir y remite a la NTC 2050 para CÓMO se calcula: calibres,
+ * capacidad de corriente, ocupación de canalizaciones, volumen de cajas, cargas por vivienda.
+ * Por eso una nota que hable de tablas o de dimensionamiento debe citar el artículo concreto
+ * de la NTC, no "RETIE" a secas ni "NTC 2050" a secas — el usuario acaba dando vueltas entre
+ * los dos documentos sin llegar al número.
+ *
+ * La numeración es la del articulado NTC 2050 (Sección-Artículo, p. ej. 210-52) y los títulos
+ * están transcritos literalmente de la tabla de contenido de la norma. La `url` es siempre la
+ * tienda oficial de ICONTEC: la norma NO es de descarga libre, así que no existe un enlace
+ * profundo público al que anclar cada artículo. Lo específico va en `fuente`.
+ */
+const NTC2050_URL = 'https://ebooks.icontec.org/';
+
+function ntc(aparte: string): ReferenciaNorma {
+  return { fuente: `NTC 2050 (Código Eléctrico Colombiano) — ${aparte}`, url: NTC2050_URL };
+}
+
+/**
+ * Likinormas — normas técnicas del operador de red Enel Colombia (antes Codensa).
+ *
+ * OJO CON EL ALCANCE: Likinormas es obligatoria en el territorio de Enel Colombia (Bogotá y
+ * Cundinamarca). En otras regiones manda la norma del operador de red que atienda el proyecto
+ * (Afinia en la costa Caribe, EPM en Antioquia, etc.); el requisito equivalente existe, pero
+ * el código de norma NO es el mismo. Por eso cada nota que cite Likinormas dice de quién es.
+ *
+ * Lo que aporta frente a RETIE/NTC: el detalle constructivo que el reglamento nacional deja
+ * abierto y que el OR sí fija — dimensiones de armarios de medidores, ubicación en el hall de
+ * acceso, ductos y cajas de acometida, esquemas de medida. Es lo que rechaza una revisión de
+ * proyecto en obra residencial.
+ *
+ * Las URL apuntan al índice de la sección, no a cada ficha: el portal reorganiza sus rutas y
+ * un enlace profundo inventado sería peor que uno que sí abre. El código exacto va en `fuente`.
+ */
+const LIKINORMAS_ACOMETIDAS = 'https://likinormas.enelcol.com.co/normas/acometidas-y-medidores';
+
+function likinormas(codigo: string, titulo: string, url: string = LIKINORMAS_ACOMETIDAS): ReferenciaNorma {
+  return { fuente: `Likinormas (Enel Colombia, operador de red) — ${codigo}: ${titulo}`, url };
 }
 
 /**
@@ -194,11 +239,148 @@ export const REF = {
     url: RETILAP_L2,
   },
 
-  // --- NTC 2050 ---
-  NTC2050: {
-    fuente: 'NTC 2050 — Código Eléctrico Colombiano (ICONTEC)',
-    url: 'https://ebooks.icontec.org/',
-  },
+  // --- NTC 2050 — Capítulo 1: generalidades ---
+  NTC_ESPACIO_TRABAJO: ntc('Art. 110-16 (Espacio alrededor de los equipos eléctricos, para 600 V nominales o menos)'),
+  NTC_ROTULADO: ntc('Art. 110-21 (Rotulado)'),
+  NTC_IDENT_DESCONEXION: ntc('Art. 110-22 (Identificación de los medios de desconexión)'),
+  NTC_CONEXIONES: ntc('Art. 110-14 (Conexiones eléctricas)'),
+
+  // --- NTC 2050 — Sección 210: circuitos ramales (el núcleo de la vivienda) ---
+  NTC_CIRCUITOS_RAMALES: ntc('Sección 210 (Circuitos ramales)'),
+  NTC_GFCI: ntc('Art. 210-8 (Protección de las personas mediante interruptores de circuito por falla a tierra)'),
+  NTC_CALIBRE_RAMAL: ntc('Art. 210-19 (Conductores: capacidad de corriente y sección transversal mínima)'),
+  NTC_PROTECCION_RAMAL: ntc('Art. 210-20 (Protección contra sobrecorriente)'),
+  NTC_CARGAS_PERMISIBLES: ntc('Art. 210-23 (Cargas permisibles)'),
+  NTC_RAMALES_ZONAS_COMUNES: ntc('Art. 210-25 (Circuitos ramales para zonas comunes)'),
+  NTC_TOMAS_VIVIENDA: ntc('Art. 210-52 (Salidas de tomacorriente en unidades de vivienda)'),
+  NTC_TOMAS_EQUIPOS: ntc('Art. 210-63 (Salidas para equipos de calefacción, congelador y aire acondicionado)'),
+  NTC_SALIDAS_ALUMBRADO: ntc('Art. 210-70 (Salidas necesarias para alumbrado)'),
+
+  // --- NTC 2050 — Sección 220: cálculo de cargas ---
+  NTC_CALCULO_RAMALES: ntc('Art. 220-3 (Cálculo de los circuitos ramales)'),
+  NTC_RAMALES_NECESARIOS: ntc('Art. 220-4 (Circuitos ramales necesarios)'),
+  NTC_ALUMBRADO_GENERAL: ntc('Art. 220-11 (Alumbrado general: factores de demanda)'),
+  NTC_PEQUENOS_ELECTRO: ntc('Art. 220-16 (Cargas para pequeños electrodomésticos, planchado y lavandería en unidades de vivienda)'),
+  NTC_ARTEFACTOS_VIVIENDA: ntc('Art. 220-17 (Carga para artefactos en unidades de vivienda)'),
+  NTC_SECADORAS: ntc('Art. 220-18 (Secadoras eléctricas de ropa en unidades de vivienda)'),
+  NTC_ESTUFAS: ntc('Art. 220-19 (Estufas eléctricas y otros artefactos de cocina en unidades de vivienda)'),
+  NTC_NEUTRO_ALIMENTADOR: ntc('Art. 220-22 (Carga del neutro del alimentador)'),
+  NTC_OPCIONAL_VIVIENDA: ntc('Art. 220-30 (Cálculos opcionales: unidades de vivienda)'),
+  NTC_OPCIONAL_MULTIFAMILIAR: ntc('Art. 220-32 (Cálculos opcionales en viviendas multifamiliares)'),
+  NTC_OPCIONAL_BIFAMILIAR: ntc('Art. 220-33 (Cálculo opcional para viviendas bifamiliares)'),
+  NTC_OPCIONAL_OR: ntc('Art. 220-37 (Cálculo opcional en viviendas multifamiliares o grupos de viviendas según la reglamentación de las empresas locales de energía)'),
+  // --- NTC 2050 — Secciones 225/230: exteriores y acometidas ---
+  NTC_EXTERIORES: ntc('Sección 225 (Circuitos ramales y alimentadores exteriores)'),
+  NTC_ACOMETIDAS: ntc('Sección 230 (Acometidas)'),
+  NTC_ACOMETIDA_SUBTERRANEA: ntc('Art. 230-31 (Acometida subterránea: calibre y capacidad de corriente)'),
+  NTC_DESCONEXION_ACOMETIDA: ntc('Art. 230-70 (Medios de desconexión de la acometida: generalidades)'),
+  NTC_MAX_DESCONEXIONES: ntc('Art. 230-71 (Número máximo de medios de desconexión)'),
+  NTC_CAPACIDAD_DESCONEXION: ntc('Art. 230-79 (Capacidad nominal del equipo de desconexión)'),
+
+  // --- NTC 2050 — Secciones 240/250/280: protecciones, tierras y sobretensiones ---
+  NTC_SOBRECORRIENTE: ntc('Sección 240 (Protección contra sobrecorriente)'),
+  NTC_PROTECCION_CONDUCTORES: ntc('Art. 240-3 (Protección de los conductores)'),
+  NTC_CORRIENTES_NORMALIZADAS: ntc('Art. 240-6 (Corrientes nominales normalizadas)'),
+  NTC_PUESTA_TIERRA: ntc('Sección 250 (Puesta a tierra)'),
+  NTC_CAMINO_TIERRA: ntc('Art. 250-51 (Camino efectivo de puesta a tierra)'),
+  NTC_EQUIPOTENCIAL: ntc('Art. 250-79 (Puentes de conexión equipotencial principal y de equipos)'),
+  NTC_ELECTRODO: ntc('Art. 250-81 (Instalación del electrodo de puesta a tierra del sistema)'),
+  NTC_ELECTRODOS_FABRICADOS: ntc('Art. 250-83 (Electrodos fabricados y otros electrodos)'),
+  NTC_RESISTENCIA_ELECTRODO: ntc('Art. 250-84 (Resistencia de los electrodos fabricados)'),
+  NTC_CALIBRE_ELECTRODO: ntc('Art. 250-94 (Calibre del conductor del electrodo de puesta a tierra en instalaciones de corriente alterna)'),
+  NTC_CALIBRE_TIERRA_EQUIPOS: ntc('Art. 250-95 (Calibre de los conductores de puesta a tierra de los equipos)'),
+  NTC_TIERRA_TOMA_CAJA: ntc('Art. 250-74 (Conexión del terminal de puesta a tierra de un tomacorriente a una caja)'),
+  NTC_TIERRA_PARARRAYOS: ntc('Art. 250-86 (Uso de la puesta a tierra de pararrayos)'),
+  NTC_DPS: ntc('Sección 280 (Descargadores de sobretensiones)'),
+  NTC_DPS_UBICACION: ntc('Art. 280-11 (Ubicación de los descargadores de sobretensiones)'),
+  // --- NTC 2050 — Capítulo 3: métodos y materiales de las instalaciones ---
+  NTC_METODOS_ALAMBRADO: ntc('Sección 300 (Métodos de alambrado)'),
+  NTC_DANOS_FISICOS: ntc('Art. 300-4 (Protección contra daños físicos)'),
+  NTC_SUBTERRANEAS: ntc('Art. 300-5 (Instalaciones subterráneas)'),
+  NTC_CUANDO_CAJA: ntc('Art. 300-15 (Cajas, conduletas o accesorios: cuándo son necesarios)'),
+  NTC_NUM_CONDUCTORES_CANALIZACION: ntc('Art. 300-17 (Número y tamaño de los conductores en una canalización)'),
+  NTC_PROPAGACION_FUEGO: ntc('Art. 300-21 (Propagación del fuego o de los productos de combustión)'),
+  NTC_PLENUM: ntc('Art. 300-22 (Alambrado en ductos, cámaras de aire y otros espacios de circulación de aire)'),
+  NTC_PROVISIONALES: ntc('Sección 305 (Instalaciones provisionales)'),
+  NTC_CONDUCTORES: ntc('Sección 310 (Conductores para instalaciones en general)'),
+  NTC_CALIBRE_MINIMO: ntc('Art. 310-5 (Calibre mínimo de los conductores)'),
+  NTC_IDENT_CONDUCTORES: ntc('Art. 310-12 (Identificación de los conductores)'),
+  NTC_AMPACIDAD: ntc('Art. 310-15 (Capacidad de corriente)'),
+  NTC_BANDEJAS: ntc('Sección 318 (Bandejas portacables)'),
+  NTC_BANDEJAS_INSTALACION: ntc('Art. 318-6 (Bandejas portacables: instalación)'),
+  NTC_BANDEJAS_TIERRA: ntc('Art. 318-7 (Bandejas portacables: puesta a tierra)'),
+  NTC_BANDEJAS_NUM_CABLES: ntc('Art. 318-9 (Número de cables multiconductores para 2 000 V nominales o menos en bandejas portacables)'),
+  NTC_IMC: ntc('Sección 345 (Tubo conduit metálico intermedio – NTC 169, Tipo IMC)'),
+  NTC_CONDUIT_RIGIDO: ntc('Sección 346 (Tubo conduit metálico rígido – NTC 171)'),
+  NTC_PVC: ntc('Sección 347 (Tubo conduit rígido no metálico)'),
+  NTC_EMT: ntc('Sección 348 (Tubería eléctrica metálica – NTC 105, Tipo EMT)'),
+  NTC_OCUPACION_TUBERIA: ntc('Capítulo 9, Cuadro 1 y Anexo C (porcentaje de ocupación y número máximo de conductores por tubería)'),
+  NTC_CAJAS: ntc('Sección 370 (Cajas de salida, de dispositivos, de paso y de empalmes, conduletas y sus accesorios)'),
+  NTC_VOLUMEN_CAJAS: ntc('Art. 370-16 (Número de conductores en las cajas de salida, de dispositivos y de empalmes y en las conduletas)'),
+  NTC_CAJAS_PASO: ntc('Art. 370-28 (Cajas de paso y de unión)'),
+  NTC_CAJAS_ACCESIBLES: ntc('Art. 370-29 (Conduletas, cajas de empalmes, de paso y de salida que deben ser accesibles)'),
+  NTC_ARMARIOS: ntc('Sección 373 (Armarios, cajas de corte y tableros de medidores enchufables)'),
+  NTC_CURVATURA_CONDUCTORES: ntc('Art. 373-6 (Curvatura de los conductores)'),
+  NTC_INTERRUPTORES: ntc('Sección 380 (Interruptores)'),
+  NTC_TABLEROS: ntc('Sección 384 (Cuadros de distribución y paneles de distribución)'),
+  NTC_PANEL_ALUMBRADO: ntc('Art. 384-14 (Panel de distribución para circuito ramal de alumbrado y artefactos)'),
+  NTC_MAX_CIRCUITOS_TABLERO: ntc('Art. 384-15 (Número de dispositivos de protección contra sobrecorriente en un panel de distribución)'),
+  NTC_TABLERO_PROTECCION: ntc('Art. 384-16 (Paneles de distribución: protección contra sobrecorriente)'),
+  NTC_TABLERO_TIERRA: ntc('Art. 384-20 (Puesta a tierra de los paneles de distribución)'),
+  NTC_TABLERO_DISTANCIAS: ntc('Art. 384-36 (Distancias mínimas)'),
+  // --- NTC 2050 — Capítulo 4: equipos para uso general ---
+  NTC_ALUMBRADO_APARATOS: ntc('Sección 410 (Aparatos de alumbrado, portabombillas, bombillas y tomacorrientes)'),
+  NTC_ALUMBRADO_ROPEROS: ntc('Art. 410-8 (Aparatos de alumbrado en roperos)'),
+  NTC_TOMAS_CAPACIDAD: ntc('Art. 410-56 (Tomacorrientes: capacidad nominal y tipo)'),
+  NTC_TOMAS_HUMEDOS: ntc('Art. 410-57 (Tomacorrientes en lugares húmedos o mojados)'),
+  NTC_TOMAS_POLO_TIERRA: ntc('Art. 410-58 (Tomacorrientes, adaptadores, conectores y clavijas del tipo con polo a tierra)'),
+  NTC_ARTEFACTOS: ntc('Sección 422 (Artefactos eléctricos)'),
+  NTC_CALEFACCION: ntc('Sección 424 (Equipos eléctricos fijos para calefacción de ambiente)'),
+  NTC_MOTORES: ntc('Sección 430 (Motores, circuitos de motores y controladores)'),
+  NTC_AIRE_ACONDICIONADO: ntc('Sección 440 (Equipos de aire acondicionado y refrigeración)'),
+  NTC_GENERADORES: ntc('Sección 445 (Generadores)'),
+  NTC_TRANSFORMADORES: ntc('Sección 450 (Transformadores y bóvedas para transformadores)'),
+  NTC_TRANSFORMADOR_PROTECCION: ntc('Art. 450-3 (Transformadores: protección contra sobrecorriente)'),
+  NTC_TRANSFORMADOR_VENTILACION: ntc('Art. 450-9 (Transformadores: ventilación)'),
+  NTC_TRANSFORMADOR_SECO: ntc('Art. 450-21 (Transformadores tipo seco instalados en interiores)'),
+
+  // --- NTC 2050 — Capítulos 6 y 7: equipos y condiciones especiales ---
+  NTC_ASCENSORES: ntc('Sección 620 (Ascensores, montacargas, escaleras y pasillos mecánicos)'),
+  NTC_CARGA_VE: ntc('Sección 625 (Equipos para sistemas de carga de vehículos eléctricos)'),
+  NTC_PISCINAS: ntc('Sección 680 (Piscinas, fuentes e instalaciones similares)'),
+  NTC_PISCINAS_GFCI: ntc('Art. 680-5 (Piscinas: transformadores e interruptores de circuito por falla a tierra)'),
+  NTC_PISCINAS_TOMAS: ntc('Art. 680-6 (Piscinas: tomacorrientes, aparatos de alumbrado, salidas para alumbrado, interruptores y ventiladores)'),
+  NTC_FOTOVOLTAICO: ntc('Sección 690 (Sistemas solares fotovoltaicos)'),
+  NTC_BOMBAS_INCENDIO: ntc('Sección 695 (Bombas contra incendios)'),
+  NTC_EMERGENCIA: ntc('Sección 700 (Sistemas de emergencia)'),
+  NTC_RESERVA_REQUERIDA: ntc('Sección 701 (Sistemas de reserva legalmente requeridos)'),
+  NTC_RESERVA_OPCIONAL: ntc('Sección 702 (Sistemas de reserva opcionales)'),
+  NTC_CLASE_1_2_3: ntc('Sección 725 (Circuitos Clase 1, Clase 2 y Clase 3 de control remoto, de señalización y de potencia limitada)'),
+  NTC_ALARMA_INCENDIO: ntc('Sección 760 (Sistemas de alarma contraincendios)'),
+  NTC_FIBRA_OPTICA: ntc('Sección 770 (Cables y canalizaciones de fibra óptica)'),
+  NTC_COMUNICACIONES: ntc('Artículo 800 (Circuitos de comunicaciones)'),
+  NTC_TV: ntc('Artículo 820 (Sistemas de distribución de antenas colectivas de radio y TV)'),
+  // --- Likinormas (Enel Colombia) — acometidas y medidores en obra residencial ---
+  LK_GENERALIDADES_ACOMETIDAS: likinormas('Generalidades 7.2', 'Acometidas eléctricas'),
+  LK_GENERALIDADES_CAJAS: likinormas('Generalidades 7.3', 'Cajas, armarios y celdas'),
+  LK_GENERALIDADES_MEDIDORES: likinormas('Generalidades 7.4', 'Medidores de energía eléctrica'),
+  LK_FORMA_MEDIDA: likinormas('Generalidades 7.4.2', 'Formas para medir la energía según carga contratada'),
+  LK_SISTEMAS_EMERGENCIA: likinormas('Generalidades 7.6', 'Sistemas de emergencia instalados por el cliente'),
+  LK_UNIFILAR_ACOMETIDAS: likinormas('AE200', 'Diagrama unifilar para acometidas y tableros'),
+  LK_ACOMETIDA_SUBTERRANEA: likinormas('AE229', 'Acometida subterránea de baja tensión'),
+  LK_MAX_CONDUCTORES_TUBO: likinormas('AE235', 'Número máximo de conductores monopolares de B.T. por tubo'),
+  LK_DUCTOS_ACOMETIDA: likinormas('AE237', 'Canalizaciones, ductos y cajas. Acometidas subterráneas de baja tensión'),
+  LK_SOPORTE_DUCTERIA_SOTANO: likinormas('AE288', 'Detalles para soporte de ductería en sótanos'),
+  LK_PROVISIONAL_OBRA: likinormas('AE290', 'Acometidas para provisional de obras'),
+  LK_CAJAS_ARMARIOS_CELDAS: likinormas('AE300', 'Cajas, armarios y celdas para instalación de medidores'),
+  LK_ARMARIO_HALL: likinormas('AE307', 'Ubicación de armario de medidores en hall de acceso'),
+  LK_ARMARIO_MEDIDORES: likinormas('AE308', 'Armario de medidores. Especificaciones generales'),
+  LK_CAJA_PROTECCION_ACOMETIDA: likinormas('AE310', 'Caja para protección de acometida'),
+  LK_TABLERO_GENERAL_ACOMETIDAS: likinormas('AE311', 'Tablero general de acometidas'),
+  LK_MEDIDA_SEMIDIRECTA: likinormas('AE314', 'Medición semidirecta'),
+  LK_CELDA_MEDIDA_MT: likinormas('AE324', 'Celdas de medida en 11,4 kV, 13,2 kV y 34,5 kV'),
+  LK_TRANSFERENCIA_ARMARIO: likinormas('AE604', 'Transferencia de planta de emergencia después del armario de medidores'),
+  LK_BOMBA_INCENDIO: likinormas('AE607', 'Bomba contra incendios'),
 } as const satisfies Record<string, ReferenciaNorma>;
 
 export type ClaveReferencia = keyof typeof REF;

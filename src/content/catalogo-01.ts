@@ -57,6 +57,14 @@ export const CATALOGO_01: TareaCatalogo[] = [
         'Las instalaciones de transformación requieren diseño formal con memorias y planos firmados por profesional competente; el modelo BIM es el soporte de ese diseño, no lo sustituye.',
         REF.REQUIEREN_DISENO,
       ),
+      notaNorma(
+        'La bóveda o el cuarto del transformador, su ventilación y las distancias a materiales combustibles tienen artículo propio en la NTC 2050: el RETIE fija el requisito de seguridad y la NTC el detalle constructivo.',
+        REF.NTC_TRANSFORMADORES,
+      ),
+      notaNormaVerificar(
+        'En territorio de Enel Colombia la celda de medida en media tensión es la del operador de red, con dimensiones y esquema fijados por norma: reservar el espacio con esa ficha, no con la geometría del equipo del fabricante. En otra región aplica la norma del operador que atienda el proyecto.',
+        REF.LK_CELDA_MEDIDA_MT,
+      ),
     ],
     tipsRevit: [
       "Usa un parámetro de proyecto compartido (por ejemplo 'Tipo de subestación' y 'Nivel de tensión') para registrar la decisión y que quede visible en las vistas del equipo.",
@@ -111,6 +119,18 @@ export const CATALOGO_01: TareaCatalogo[] = [
       notaNormaVerificar(
         'El área de un cuarto técnico no es la huella de los equipos: el RETIE exige un espacio de trabajo libre al frente de tableros y celdas, con anchura y altura mínimas, cuyo valor depende de la tensión y de si hay partes energizadas expuestas a lado y lado del pasillo. Confirmar la distancia aplicable a cada tablero del proyecto.',
         REF.ESPACIOS_MONTAJE,
+      ),
+      notaNormaVerificar(
+        'El espacio libre de trabajo delante de un tablero —fondo, ancho y altura mínimos según la tensión y según lo que haya al frente— está tabulado en el Art. 110-16 de la NTC 2050. Esa es la medida que hay que exigirle al arquitecto y reservar en el modelo.',
+        REF.NTC_ESPACIO_TRABAJO,
+      ),
+      notaNorma(
+        'En obra residencial en territorio de Enel Colombia el armario de medidores va en el hall de acceso, con ubicación, dimensiones y accesibilidad fijadas por norma del operador de red. Es uno de los rechazos más frecuentes en revisión de proyecto.',
+        REF.LK_ARMARIO_HALL,
+      ),
+      notaNormaVerificar(
+        'Las dimensiones del armario dependen de cuántas unidades de vivienda alimente: escoger la ficha del armario antes de dibujar el nicho, no después.',
+        REF.LK_ARMARIO_MEDIDORES,
       ),
       notaNorma(
         'Los requisitos de instalación de celdas y tableros —accesibilidad, señalización, grado de protección y espacio de operación— están en el artículo de celdas y tableros del RETIE.',
@@ -177,8 +197,16 @@ export const CATALOGO_01: TareaCatalogo[] = [
         REF.SELLOS_CORTAFUEGO,
       ),
       notaNormaVerificar(
-        'Las tablas de calibres, capacidad de corriente y porcentajes de ocupación de canalizaciones son las de la NTC 2050; el RETIE remite a ella y no las reproduce.',
-        REF.NTC2050,
+        'El porcentaje máximo de ocupación de la canalización lo fija el Cuadro 1 del Capítulo 9 de la NTC 2050, y el número máximo de conductores por diámetro comercial, los cuadros del Anexo C. El RETIE remite a esos cuadros y no los reproduce: buscarlos ahí, no en el reglamento.',
+        REF.NTC_OCUPACION_TUBERIA,
+      ),
+      notaNormaVerificar(
+        'El calibre no se decide por el ducto sino por la capacidad de corriente del conductor, con los factores de corrección por temperatura ambiente y por agrupamiento de más de tres conductores en la misma canalización.',
+        REF.NTC_AMPACIDAD,
+      ),
+      notaNorma(
+        'Los ductos y cajas de la acometida en baja tensión los fija la norma del operador de red —diámetro, profundidad de zanja y cajas de inspección—, no el criterio del proyectista.',
+        REF.LK_DUCTOS_ACOMETIDA,
       ),
     ],
     tipsRevit: [
@@ -234,6 +262,18 @@ export const CATALOGO_01: TareaCatalogo[] = [
       notaNormaVerificar(
         'Los factores de demanda y diversidad no son valores universales: dependen del tipo de proyecto y del criterio del diseñador, y deben quedar justificados en la memoria. Este cálculo es preliminar y debe recalcularse con las cargas reales (ver PB-02-16) antes de emitir cualquier documento para el operador de red.',
         REF.CRITERIOS_DISENO,
+      ),
+      notaNormaVerificar(
+        'Para vivienda multifamiliar la NTC 2050 da dos caminos: el método general (alumbrado general por metro cuadrado con los factores de demanda del Art. 220-11, más los circuitos de pequeños electrodomésticos, estufa y secadora) y el método opcional del Art. 220-32. No se mezclan: elegir uno y dejarlo escrito en la memoria.',
+        REF.NTC_OPCIONAL_MULTIFAMILIAR,
+      ),
+      notaNormaVerificar(
+        'La carga de cada unidad de vivienda arranca de los VA por metro cuadrado de alumbrado general; los factores de demanda aplicables están tabulados por rango de carga y por tipo de ocupación.',
+        REF.NTC_ALUMBRADO_GENERAL,
+      ),
+      notaNormaVerificar(
+        'La carga total contratada decide la forma de medida —directa o semidirecta— que exige el operador de red, y con ella el tamaño del armario y de la acometida. Confirmarla antes de cerrar la potencia del transformador.',
+        REF.LK_FORMA_MEDIDA,
       ),
       notaNorma(
         'Los requisitos de instalación del transformador de potencia y distribución —incluidas las condiciones del sitio de montaje— están en el artículo de transformadores del RETIE.',
@@ -302,6 +342,14 @@ export const CATALOGO_01: TareaCatalogo[] = [
         REF.CANALIZACIONES,
       ),
       notaNorma(
+        'Los requisitos de las instalaciones subterráneas —profundidad de enterramiento, protección mecánica y separación respecto de otros servicios— están en el Art. 300-5 de la NTC 2050.',
+        REF.NTC_SUBTERRANEAS,
+      ),
+      notaNormaVerificar(
+        'El radio mínimo de curvatura dentro del cárcamo no es libre: depende del calibre y del tipo de cable, y forzarlo daña el aislamiento aunque el tendido entre geométricamente.',
+        REF.NTC_CURVATURA_CONDUCTORES,
+      ),
+      notaNorma(
         'Los cárcamos y demás canalizaciones deben permitir la operación y el mantenimiento de la instalación durante toda su vida útil, lo que implica tapas registrables y evacuación de agua.',
         REF.OPERACION_MANTENIMIENTO,
       ),
@@ -362,6 +410,14 @@ export const CATALOGO_01: TareaCatalogo[] = [
         REF.COMPUERTAS_VENTILACION,
       ),
       notaNorma(
+        'La ventilación del recinto del transformador tiene artículo propio en la NTC 2050: debe evacuar el calor de las pérdidas sin depender de medios forzados cuando la norma no los exige.',
+        REF.NTC_TRANSFORMADOR_VENTILACION,
+      ),
+      notaNorma(
+        'Si el transformador es tipo seco instalado en interior —lo habitual en la subestación de un edificio residencial— aplican además las distancias a materiales combustibles y los requisitos de encerramiento del Art. 450-21.',
+        REF.NTC_TRANSFORMADOR_SECO,
+      ),
+      notaNorma(
         'Las subestaciones de media tensión tipo interior o en edificaciones tienen requisitos propios de ventilación, acceso y resistencia al fuego de la envolvente en el artículo específico del RETIE.',
         REF.SUBESTACION_MT_INTERIOR,
       ),
@@ -420,6 +476,10 @@ export const CATALOGO_01: TareaCatalogo[] = [
       notaNorma(
         'El código de colores para conductores de uso eléctrico es obligatorio y está normalizado en el RETIE; dejarlo preconfigurado en la plantilla evita que cada modelador lo interprete a su manera y que la corrección aparezca en la revisión de planos.',
         REF.CODIGO_COLORES,
+      ),
+      notaNorma(
+        'La identificación de los conductores por color y por marcación también está reglada en la NTC 2050: el parámetro de color de la plantilla debe coincidir con lo que exigen las dos normas, no con la costumbre de la oficina.',
+        REF.NTC_IDENT_CONDUCTORES,
       ),
       notaNorma(
         'Las tensiones nominales y su agrupación por niveles están clasificadas en el RETIE; los ajustes eléctricos del proyecto deben partir de esa clasificación y no de los valores por defecto de la plantilla de fábrica.',
@@ -538,6 +598,10 @@ export const CATALOGO_01: TareaCatalogo[] = [
         'Los sistemas de emergencia deben quedar claramente identificados y separados de los sistemas normales; una estructura de worksets que los mezcla obliga después a reconstruir a mano qué elementos pertenecen al sistema de emergencia.',
         REF.SISTEMAS_EMERGENCIA,
       ),
+      notaNorma(
+        'La NTC 2050 dedica una sección completa a los sistemas de emergencia —alcance, fuentes, ensayos— y exige mantener su alambrado independiente del alambrado normal. Eso se refleja en el modelo separando los sistemas desde el principio.',
+        REF.NTC_EMERGENCIA,
+      ),
       notaCriterio(
         'Una estructura de worksets demasiado granular o demasiado genérica dificulta el préstamo de elementos y la sincronización; conviene definirla según cómo se va a dividir realmente el trabajo del equipo.',
       ),
@@ -593,6 +657,10 @@ export const CATALOGO_01: TareaCatalogo[] = [
       notaNorma(
         'Las alturas de montaje de tomacorrientes, interruptores y tableros se miden desde el piso terminado. Si los niveles del modelo están referidos a losa estructural, toda altura modelada queda desplazada por el espesor del acabado y la verificación contra la norma se hace sobre una cota falsa.',
         REF.ESPACIOS_MONTAJE,
+      ),
+      notaNormaVerificar(
+        'La separación entre tomacorrientes en vivienda no es criterio de oficina: el Art. 210-52 de la NTC 2050 fija que ningún punto del perímetro de pared quede a más de la distancia reglada de una salida. Los niveles del modelo tienen que permitir medir esa distancia sobre la planta real.',
+        REF.NTC_TOMAS_VIVIENDA,
       ),
       notaCriterio(
         'Trabajar con niveles creados manualmente en lugar de niveles monitoreados desde el vínculo arquitectónico es una causa frecuente de elementos eléctricos ubicados en el piso equivocado.',

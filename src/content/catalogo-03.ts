@@ -85,6 +85,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     notasIngenieria: [
       notaNorma('La memoria descriptiva hace parte de la documentación de diseño que el RETIE exige para las instalaciones que requieren diseño, y debe ser coherente con los planos y con el modelo.', REF.REQUIEREN_DISENO),
       notaNorma('La memoria debe estar respaldada por el profesional competente responsable del diseño; el modelador redacta el soporte documental, no asume la responsabilidad técnica.', REF.RESPONSABILIDAD_DISENADOR),
+      notaNormaVerificar('La memoria tiene que decir por cuál método se calculó la carga: en vivienda multifamiliar el general y el opcional del Art. 220-32 de la NTC 2050 dan resultados distintos y ambos son válidos. Sin el método declarado, el número no es verificable.', REF.NTC_OPCIONAL_MULTIFAMILIAR),
     ],
     tipsRevit: [
       "Genera una tabla de planificación de cargas por tablero con el comando 'Tabla de planificación/cuantificaciones' filtrada por categoría 'Tableros eléctricos' para alimentar la memoria con datos reales del modelo.",
@@ -129,6 +130,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     notasIngenieria: [
       notaNormaVerificar('El diagrama unifilar debe reflejar las protecciones realmente seleccionadas, con su capacidad nominal y su capacidad de corte, y ser coherente con el estudio de coordinación de protecciones del proyecto.', REF.SOBRECORRIENTES),
       notaNorma('Los tableros y celdas representados en el unifilar deben corresponder a equipos que cumplan los requisitos de instalación del RETIE, incluida su identificación y rotulación.', REF.CELDAS_TABLEROS),
+      notaNorma('El unifilar de acometidas y tableros que revisa el operador de red tiene formato propio. En territorio de Enel Colombia es la ficha AE200 de Likinormas; presentarlo con otro formato es causa de devolución.', REF.LK_UNIFILAR_ACOMETIDAS),
+      notaNorma('El unifilar debe mostrar el medio de desconexión de la acometida y su capacidad, que la NTC 2050 regla en la Sección 230.', REF.NTC_ACOMETIDAS),
       notaCriterio('Revit no genera diagramas unifilares de forma automática a partir de la topología eléctrica; el diagrama se construye manualmente sobre los datos extraídos del modelo.'),
     ],
     tipsRevit: [
@@ -174,6 +177,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('La iluminación de escaleras y rutas de evacuación pertenece a los sistemas de emergencia y debe ser independiente del alumbrado normal.', REF.SISTEMAS_EMERGENCIA),
+      notaNorma('La NTC 2050 exige que el alambrado de los circuitos de emergencia sea independiente del normal: en el plano de escaleras eso significa canalización propia, no solo un circuito marcado distinto.', REF.NTC_EMERGENCIA),
       notaNormaVerificar('Los niveles de iluminancia y la autonomía exigidos al alumbrado de emergencia los fija el RETILAP; confirmar los valores aplicables a escaleras y circulaciones antes de cerrar el diseño.', REF.ILUM_EMERGENCIA),
     ],
     tipsRevit: [
@@ -219,6 +223,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Los puntos donde una red hidrosanitaria coincide con salidas o tableros eléctricos exigen protección contra falla de aislamiento y separación adecuada; la coordinación entre disciplinas es la que evita ese riesgo.', REF.PROTECCION_AISLAMIENTO),
+      notaNorma('Los equipos de bombeo hidrosanitario son motores: su circuito, protección y medio de desconexión se rigen por la Sección 430 de la NTC 2050, no por las reglas de un circuito de tomas.', REF.NTC_MOTORES),
+      notaNormaVerificar('Si el proyecto tiene piscina o fuente en zonas comunes, aplica además la Sección 680 de la NTC 2050, con distancias, protección por falla a tierra y conexión equipotencial propias. Confirmarlo con arquitectura antes de cerrar el plano.', REF.NTC_PISCINAS),
       notaNorma('Ninguna tubería de otra disciplina puede invadir el espacio de trabajo frente a tableros ni el interior de cuartos técnicos eléctricos.', REF.ESPACIOS_MONTAJE),
     ],
     tipsRevit: [
@@ -266,6 +272,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
       notaNorma('La demostración de conformidad de la instalación se hace mediante declaración de cumplimiento del constructor y, cuando se exige certificación plena, con el dictamen de inspección de un organismo acreditado por la ONAC.', REF.DECLARACION_CUMPLIMIENTO),
       notaNorma('El RETIE define qué instalaciones requieren certificación plena; determinarlo antes de redactar la memoria evita preparar un soporte documental insuficiente para el trámite.', REF.CERTIFICACION_PLENA),
       notaNormaVerificar('No se debe citar un número de artículo o tabla del RETIE en la memoria sin confirmarlo contra el texto vigente. El reglamento fue reexpedido por la Resolución 40284 de 2026 y su numeración cambió respecto a versiones anteriores.', REF.REQUIEREN_DISENO),
+      notaNormaVerificar('El RETIE no reproduce las tablas de cálculo: para las instalaciones de uso final remite a la NTC 2050. En la memoria hay que citar el artículo concreto de la NTC que respalda cada número —cargas por la Sección 220, capacidad de corriente por el Art. 310-15, puesta a tierra por la Sección 250— y no «NTC 2050» a secas, que no le sirve al inspector para verificar nada.', REF.NTC_CALCULO_RAMALES),
     ],
     tipsRevit: [
       "Genera desde Revit las tablas de planificación de tableros y de la malla de puesta a tierra para anexarlas como soporte de la memoria, evitando transcripción manual de datos.",
@@ -309,6 +316,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     notasIngenieria: [
       notaNorma('Los productos objeto del RETIE deben contar con certificado de conformidad o declaración de conformidad del proveedor; la especificación técnica debe exigirlo explícitamente y no solo describir el producto.', REF.PRODUCTOS_RETIE),
       notaNorma('Las normas técnicas aplicables a cada producto e instalación las remite el propio RETIE; la especificación debe citar la norma vigente y no una edición derogada.', REF.NORMAS_TECNICAS),
+      notaNorma('Para conductores, la especificación no es solo el calibre: el tipo de aislamiento (THHN, THWN-2, XHHW) define temperatura de operación y usos permitidos, y está reglado en la Sección 310 de la NTC 2050.', REF.NTC_CONDUCTORES),
       notaCriterio('Las especificaciones técnicas deben ser consistentes con las familias realmente cargadas en el modelo para evitar contradicciones entre plano y documento.'),
     ],
     tipsRevit: [
@@ -398,6 +406,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('El sistema de protección contra rayos tiene requisitos propios en el RETIE; el plano debe mostrar captadores, bajantes y su conexión al sistema de puesta a tierra como un conjunto, no como elementos sueltos.', REF.PROTECCION_RAYOS),
+      notaNorma('La NTC 2050 también toca el apantallamiento por un punto concreto: el Art. 250-86 regula el uso de la puesta a tierra de pararrayos y su relación con el electrodo del sistema eléctrico. El diseño del apantallamiento en sí se rige por el RETIE y por la norma de protección contra rayos aplicable.', REF.NTC_TIERRA_PARARRAYOS),
       notaCriterio('El sistema de apantallamiento debe representarse de forma consistente con el método de cálculo usado para definir el radio de protección.'),
     ],
     tipsRevit: [
@@ -485,6 +494,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Los detalles de conexión del sistema de protección contra rayos deben ser coherentes con los componentes admitidos para el sistema de puesta a tierra, incluidos conectores y materiales.', REF.SPT_COMPONENTES),
+      notaNorma('El detalle crítico es cómo se une la bajante al sistema de puesta a tierra: el Art. 250-86 de la NTC 2050 gobierna esa interconexión, y de ella depende que no queden dos tierras a potenciales distintos dentro del mismo edificio.', REF.NTC_TIERRA_PARARRAYOS),
       notaCriterio('Los detalles de conexión a la malla de puesta a tierra deben ser consistentes con el tipo de conector y material especificado para el sistema.'),
     ],
     tipsRevit: [
@@ -529,6 +539,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('El plano de baja tensión debe reflejar las protecciones de cada alimentador y su coordinación; es el documento que usa el inspector para contrastar lo construido contra lo diseñado.', REF.SOBRECORRIENTES),
+      notaNormaVerificar('El calibre rotulado en el plano tiene que salir de la capacidad de corriente del Art. 310-15 de la NTC 2050 con sus factores de corrección, y no de la costumbre de la oficina para ese tipo de circuito.', REF.NTC_AMPACIDAD),
+      notaNorma('El tramo de acometida subterránea desde la red del operador hasta el armario sigue la ficha del operador de red: en territorio de Enel Colombia, la norma de acometida subterránea de baja tensión.', REF.LK_ACOMETIDA_SUBTERRANEA),
       notaCriterio('Los calibres y tipos de canalización mostrados en plano deben coincidir con los definidos en el cálculo de circuitos, no con valores genéricos de plantilla.'),
     ],
     tipsRevit: [
@@ -573,6 +585,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('El isométrico debe mostrar los pasos de losa y sus sellos cortafuego, y las secciones de canalización deben corresponder al porcentaje de ocupación calculado.', REF.CANALIZACIONES),
+      notaNorma('El requisito de fondo es no crear un camino de propagación del fuego entre pisos: la NTC 2050 lo exige para todo paso de canalización por un elemento con resistencia al fuego.', REF.NTC_PROPAGACION_FUEGO),
     ],
     tipsRevit: [
       "Usa 'Vista 3D aislada' con 'Ocultar categorías no relacionadas' para dejar visible solo el sistema de baja tensión en la vista isométrica.",
@@ -616,6 +629,10 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('La zona de cocina suele requerir circuitos dedicados para electrodomesticos de alta demanda; confirmar con el diseño de cargas cuáles puntos deben quedar en circuito independiente antes de cerrar el plano.', REF.INSTALACIONES_BASICAS),
+      notaNormaVerificar('En unidades de vivienda no es «suele»: la NTC 2050 exige al menos dos circuitos de 20 A para pequeños electrodomésticos que sirvan cocina y comedor, y uno independiente para lavandería. Ese mínimo es el punto de partida del cuadro de cargas del apartamento.', REF.NTC_PEQUENOS_ELECTRO),
+      notaNormaVerificar('La cantidad y la posición de las tomas del apartamento las fija el Art. 210-52: ningún punto del perímetro de pared a más de la distancia reglada de una salida, y regla propia para los mesones de cocina.', REF.NTC_TOMAS_VIVIENDA),
+      notaNorma('Los lugares que exigen tomacorriente protegido por falla a tierra están listados en el Art. 210-8 de la NTC 2050: baño, mesón de cocina, exteriores, sótano y garaje, entre otros.', REF.NTC_GFCI),
+      notaNorma('Las salidas de alumbrado obligatorias por habitación y su control desde interruptor de pared están en el Art. 210-70; el plano del apartamento tiene que mostrarlas todas.', REF.NTC_SALIDAS_ALUMBRADO),
       notaNorma('Las tomas de cocina, zonas de lavado y baños requieren protección contra falla de aislamiento; el cuadro de cargas debe evidenciar qué circuitos la llevan.', REF.PROTECCION_AISLAMIENTO),
       notaNorma('Las alturas de montaje y el grado de protección de las tomas representadas deben corresponder a los requisitos del artículo de clavijas y tomacorrientes.', REF.TOMACORRIENTES),
     ],
@@ -661,6 +678,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Los tableros de zonas comunes accesibles al público tienen requisitos de accesibilidad restringida que el plano debe reflejar en su ubicación y en el detalle del recinto.', REF.TABLEROS_USO_PUBLICO),
+      notaNorma('Los circuitos ramales de zonas comunes tienen artículo propio en la NTC 2050 (Art. 210-25): se alimentan desde el tablero de servicios comunes y no pueden colgarse del circuito de una unidad de vivienda.', REF.NTC_RAMALES_ZONAS_COMUNES),
       notaCriterio('Las áreas de servicios comunes suelen alimentarse de un tablero general distinto al de las viviendas; verificar que la separación de circuitos en plano sea consistente con esa distribución.'),
     ],
     tipsRevit: [
@@ -705,6 +723,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('La iluminación de circulaciones verticales comunes forma parte de la ruta de evacuación y debe quedar respaldada por el sistema de emergencia, independiente del alumbrado normal.', REF.SISTEMAS_EMERGENCIA),
+      notaNorma('Al ser parte del sistema de emergencia, su alambrado debe ir independiente del alumbrado normal de la circulación, según la Sección 700 de la NTC 2050.', REF.NTC_EMERGENCIA),
       notaNormaVerificar('Los niveles de iluminancia y la uniformidad exigidos al alumbrado de emergencia en rutas de evacuación los fija el RETILAP; confirmar los valores antes de cerrar el plano.', REF.ILUM_EMERGENCIA),
     ],
     tipsRevit: [
@@ -749,6 +768,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Ascensores, escaleras y andenes móviles son equipos especiales con requisitos propios de instalación eléctrica, medios de desconexión e iluminación de foso y cuarto de máquinas.', REF.ASCENSORES),
+      notaNorma('La Sección 620 de la NTC 2050 es la que hay que abrir para estos detalles: alimentación del cuarto de máquinas, alumbrado y tomacorriente del foso, y medios de desconexión con sus enclavamientos.', REF.NTC_ASCENSORES),
       notaCriterio('La iluminación y tomas del foso de ascensor suelen tener requisitos particulares de montaje del proveedor del equipo; confirmar contra la ficha técnica del ascensor antes de cerrar el detalle.'),
     ],
     tipsRevit: [
@@ -838,6 +858,8 @@ export const CATALOGO_03: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Los motores y grupos electrógenos tienen requisitos de instalación y protección propios en el RETIE, distintos de los de una carga resistiva.', REF.MOTORES_GRUPOS),
+      notaNormaVerificar('Los equipos de presión son motores: conductores del circuito ramal, protección contra sobrecarga y medio de desconexión se dimensionan por la Sección 430 de la NTC 2050, que parte de la corriente de placa y no de la potencia nominal.', REF.NTC_MOTORES),
+      notaNormaVerificar('Si el equipo es una bomba contra incendio, no aplica la Sección 430 sino la 695, que exige alimentación dedicada y criterios distintos de protección: confirmar de qué bomba se trata antes de dimensionar.', REF.NTC_BOMBAS_INCENDIO),
       notaCriterio('Los eyectores y equipos de presión coordinados con HVAC suelen requerir confirmación de potencia final con el proveedor del equipo antes del cierre de circuitos.'),
     ],
     tipsRevit: [
@@ -883,6 +905,7 @@ export const CATALOGO_03: TareaCatalogo[] = [
     notasIngenieria: [
       notaNormaVerificar('Los requisitos de iluminación de grandes áreas exteriores, incluidos los niveles y el control de la contaminación lumínica, los fija el RETILAP; confirmarlos antes de cerrar el plano.', REF.ILUM_EXTERIOR),
       notaNorma('Las redes eléctricas que alimentan el alumbrado exterior deben cumplir los requisitos generales de redes de iluminación del RETIE.', REF.REDES_ILUMINACION),
+      notaNorma('Los circuitos ramales y alimentadores que salen de la edificación tienen sección propia en la NTC 2050 (Sección 225): calibre mínimo, distancias al suelo y protección mecánica del tramo exterior.', REF.NTC_EXTERIORES),
     ],
     tipsRevit: [
       "Usa 'Filtros de vista' para diferenciar el alumbrado exterior del resto de sistemas eléctricos en la planta general.",

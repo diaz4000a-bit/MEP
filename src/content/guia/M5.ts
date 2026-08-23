@@ -66,7 +66,7 @@ export const M5_LECCIONES: Leccion[] = [
       'Nombrar los tableros con una nomenclatura consistente (TG-01, TB-P01, etc.) desde el inicio para que los panel schedules sean legibles.',
       'Modelar primero la topología completa de tableros y solo después entrar al detalle de circuitos ramales.',
       'Usar un filtro o workset específico para la red de BT que permita aislarla visualmente durante coordinación con otras disciplinas.',
-      'Verificar los calibres de conductor contra la memoria de cálculo eléctrico y RETIE antes de fijarlos en el modelo.',
+      'Verificar los calibres contra la memoria de cálculo y contra la tabla de capacidad de corriente del Art. 310-15 de la NTC 2050, con los factores de corrección por temperatura y agrupamiento. El RETIE no trae tablas de calibres: remite a la NTC 2050.',
     ],
     ejemploAplicado:
       'Esta lección corresponde directamente a la tarea PB-02-02 "Modelar la red de distribución en baja tensión desde la subestación hasta los tableros de cada bloque", complementada con PB-02-04 "Modelar las redes eléctricas de alimentación de las zonas de servicios comunes del proyecto", que exige exactamente la jerarquía tablero general → subtableros descrita en el procedimiento.',
@@ -201,7 +201,7 @@ export const M5_LECCIONES: Leccion[] = [
       'Modelar el sistema de apantallamiento (puntas tipo Franklin, bajantes, conductores de bajada) conectado a la malla de tierra, independiente o común según el diseño.',
       'Verificar la continuidad eléctrica del recorrido completo, desde la punta captadora hasta el electrodo de puesta a tierra, sin tramos flotantes.',
       'Documentar el plano de puesta a tierra (planta, cortes e isométrico) y el plano del método electrogeométrico para el entregable.',
-      'Incluir en la memoria RETIE el valor objetivo de resistencia de puesta a tierra (típicamente ≤10 ohm) y el criterio de diseño aplicado.',
+      'Incluir en la memoria RETIE el valor objetivo de resistencia de puesta a tierra tomado de los valores de referencia del RETIE (Libro 3, Título 12, Art. 3.12.3, que los da por tipo de instalación) y el criterio de diseño aplicado, más el método de medición del Art. 3.12.4.',
     ],
     erroresFrecuentes: [
       'Modelar el apantallamiento sin aplicar realmente el método electrogeométrico, dejando zonas del edificio fuera del radio de protección.',
@@ -211,7 +211,7 @@ export const M5_LECCIONES: Leccion[] = [
       'Reutilizar alturas de puntas captadoras de otro proyecto sin recalcular el radio de protección real del edificio actual.',
     ],
     buenasPracticas: [
-      'Verificar el nivel ceráunico de la zona del proyecto para definir el nivel de protección exigido por RETIE antes de dimensionar el apantallamiento.',
+      'Verificar el nivel ceráunico de la zona para definir el nivel de protección que exige el RETIE (Libro 3, Título 13, Art. 3.13.1) antes de dimensionar el apantallamiento; la evaluación del riesgo es la que fija el nivel, no el tamaño del edificio.',
       'Modelar la malla de tierra como sistema independiente para poder auditar su continuidad con las herramientas de revisión del modelo.',
       'Coordinar con estructura los puntos de anclaje de bajantes y puntas captadoras sobre cubierta.',
       'Dejar registro isométrico de las cajas de inspección de puesta a tierra para el entregable al operador de red.',

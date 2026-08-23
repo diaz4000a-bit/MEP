@@ -44,6 +44,8 @@ export const CATALOGO_04: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('La detección de interferencias no termina en el choque geométrico: el espacio de trabajo frente a tableros y los pasillos de operación deben quedar libres, y solo se detectan si se modelan como sólidos y se incluyen en la comprobación.', REF.ESPACIOS_MONTAJE),
+      notaNormaVerificar('El choque que más se pasa por alto no es contra un ducto sino contra el espacio libre de trabajo del tablero: el Art. 110-16 de la NTC 2050 lo tabula, y una tubería de otra disciplina dentro de esa zona es un incumplimiento aunque no toque el equipo.', REF.NTC_ESPACIO_TRABAJO),
+      notaNorma('Si el choque ocurre en un cielo raso usado como cámara de aire de retorno, aplica el Art. 300-22 de la NTC 2050: ahí solo se admiten ciertos métodos de alambrado, así que la solución no es solo mover la ruta.', REF.NTC_PLENUM),
       notaNormaVerificar('Las distancias de seguridad a partes energizadas son un requisito normativo, no una holgura de coordinación; verificar el valor aplicable al nivel de tensión de cada zona.', REF.DISTANCIAS_SEGURIDAD),
     ],
     tipsRevit: [
@@ -97,6 +99,7 @@ export const CATALOGO_04: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Un conflicto cerrado moviendo la instalación eléctrica puede alterar el diseño; cuando el cambio afecta criterios técnicos debe validarlo el diseñador responsable y no resolverse solo en el modelo.', REF.RESPONSABILIDAD_DISENADOR),
+      notaNorma('Al reubicar una ruta hay que revisar que el nuevo trazado siga protegido contra daños físicos —el Art. 300-4 de la NTC 2050 obliga a proteger la canalización donde pueda recibir golpes o quedar expuesta—, no solo que deje de chocar.', REF.NTC_DANOS_FISICOS),
     ],
     tipsRevit: [
       'Usa el "ID de elemento" que entrega el informe de Verificación de interferencias (clic derecho > "Seleccionar por ID") para ubicar en el modelo el elemento eléctrico exacto reportado en la incidencia.',

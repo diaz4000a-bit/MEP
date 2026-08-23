@@ -56,6 +56,14 @@ export const CATALOGO_02: TareaCatalogo[] = [
         'Los seccionadores, cortacircuitos e interruptores de media tensión asociados al punto de conexión tienen requisitos de instalación propios en el RETIE.',
         REF.EQUIPOS_MEDIA_TENSION,
       ),
+      notaNorma(
+        'El punto de conexión, el tipo de acometida y el esquema de medida los define la norma del operador de red, no el proyectista. En territorio de Enel Colombia eso está en el capítulo de acometidas eléctricas de Likinormas; en otra región, en la norma del operador que atienda el proyecto.',
+        REF.LK_GENERALIDADES_ACOMETIDAS,
+      ),
+      notaNorma(
+        'La acometida tiene sección propia en la NTC 2050, con requisitos de calibre, número de acometidas por edificación y medios de desconexión que el RETIE no reproduce.',
+        REF.NTC_ACOMETIDAS,
+      ),
     ],
     tipsRevit: [
       'Usa la categoría "Conductores eléctricos" con el sistema "Cable Tray" o "Conduit" según se modele ducto o cable directamente enterrado.',
@@ -114,8 +122,20 @@ export const CATALOGO_02: TareaCatalogo[] = [
         REF.SOBRECORRIENTES,
       ),
       notaNormaVerificar(
-        'El calibre definitivo no se elige por la carga estimada del bloque: resulta de la capacidad de corriente, la caída de tensión admisible y la corriente de cortocircuito. Las tablas aplicables son las de la NTC 2050.',
-        REF.NTC2050,
+        'El calibre definitivo no se elige por la carga estimada del bloque: resulta de la capacidad de corriente del conductor —con corrección por temperatura y por agrupamiento—, de la caída de tensión admisible y de la corriente de cortocircuito. La tabla de capacidad de corriente es la del Art. 310-15 de la NTC 2050.',
+        REF.NTC_AMPACIDAD,
+      ),
+      notaNormaVerificar(
+        'El neutro del alimentador no se dimensiona igual que las fases: la NTC 2050 permite reducirlo aplicando factores de demanda sobre la carga desbalanceada máxima, salvo en las cargas que la norma excluye. En vivienda esto cambia el calibre del alimentador de bloque.',
+        REF.NTC_NEUTRO_ALIMENTADOR,
+      ),
+      notaNormaVerificar(
+        'El conductor de puesta a tierra de equipos que acompaña al alimentador se dimensiona por la capacidad del dispositivo de protección aguas arriba, no por el calibre de las fases.',
+        REF.NTC_CALIBRE_TIERRA_EQUIPOS,
+      ),
+      notaNormaVerificar(
+        'La carga del alimentador de un bloque de vivienda se puede calcular por el método general o por el método opcional para viviendas multifamiliares, que aplica factores de demanda distintos. Fijar cuál se usó en la memoria antes de dimensionar: los dos son válidos y dan resultados diferentes.',
+        REF.NTC_OPCIONAL_MULTIFAMILIAR,
       ),
     ],
     tipsRevit: [
@@ -166,6 +186,18 @@ export const CATALOGO_02: TareaCatalogo[] = [
       notaNormaVerificar(
         'La cantidad mínima de salidas por espacio y su distribución la fija el código eléctrico aplicable, no el criterio del modelador. Esta propuesta es un punto de partida sujeto a validación por el diseñador.',
         REF.INSTALACIONES_BASICAS,
+      ),
+      notaNormaVerificar(
+        'En unidades de vivienda la regla es concreta: ningún punto del perímetro de pared de salas, alcobas y espacios similares puede quedar a más de la distancia reglada de un tomacorriente, y los mesones de cocina tienen su propia regla de separación. Está en el Art. 210-52 de la NTC 2050, no en el RETIE.',
+        REF.NTC_TOMAS_VIVIENDA,
+      ),
+      notaNorma(
+        'Baños, cocinas (mesón), exteriores, sótanos, garajes y zonas cercanas a lavaderos exigen tomacorrientes protegidos con interruptor de falla a tierra. El listado de lugares está en el Art. 210-8 de la NTC 2050: revisarlo espacio por espacio antes de repartir salidas.',
+        REF.NTC_GFCI,
+      ),
+      notaNormaVerificar(
+        'Los equipos de aire acondicionado, calefacción y congelador tienen salida propia reglada: no cuelgan de un circuito de tomas de uso general.',
+        REF.NTC_TOMAS_EQUIPOS,
       ),
       notaNorma(
         'La protección contra falla de aislamiento mediante dispositivos de corriente diferencial residual es obligatoria en los casos que fija el RETIE, típicamente asociados a zonas húmedas y a tomas accesibles. Marcarlo desde la propuesta evita rehacer circuitos después.',
@@ -230,6 +262,10 @@ export const CATALOGO_02: TareaCatalogo[] = [
         'Los tableros de distribución instalados en espacios de uso público tienen requisitos específicos de accesibilidad restringida y protección contra manipulación en el RETIE.',
         REF.TABLEROS_USO_PUBLICO,
       ),
+      notaNorma(
+        'Los circuitos ramales que alimentan zonas comunes de un edificio multifamiliar tienen artículo propio en la NTC 2050: no pueden derivarse del circuito de una unidad de vivienda y deben alimentarse desde el tablero de servicios comunes.',
+        REF.NTC_RAMALES_ZONAS_COMUNES,
+      ),
       notaCriterio(
         'La separación de circuitos comunes y privativos es relevante para la facturación de energía por copropiedad; confirmar el criterio de agrupación con el diseño de conjunto antes de cerrar el modelado.',
       ),
@@ -282,6 +318,10 @@ export const CATALOGO_02: TareaCatalogo[] = [
       notaNorma(
         'Las instalaciones eléctricas de ascensores, escaleras y andenes móviles son equipos especiales con requisitos propios en el RETIE, incluidos los medios de desconexión y la iluminación de foso y cuarto de máquinas.',
         REF.ASCENSORES,
+      ),
+      notaNorma(
+        'La NTC 2050 dedica la Sección 620 a ascensores y montacargas: alimentación del cuarto de máquinas, alumbrado y tomacorriente del foso, y medios de desconexión. Es la sección que hay que abrir para modelar el foso, no el reglamento.',
+        REF.NTC_ASCENSORES,
       ),
       notaNormaVerificar(
         'El foso es un recinto con riesgo de humedad y acceso ocasional de personal de mantenimiento: la toma exige protección contra falla de aislamiento. Confirmar el esquema exacto con el diseño y con la ficha técnica del ascensor.',
@@ -338,6 +378,14 @@ export const CATALOGO_02: TareaCatalogo[] = [
         'Un ducto vertical atraviesa una losa con resistencia al fuego en cada piso: cada paso debe restituirse con sello cortafuego, y modelarlo desde el inicio evita descubrirlo en la inspección de certificación.',
         REF.SELLOS_CORTAFUEGO,
       ),
+      notaNorma(
+        'El sellado no es solo del ducto: la NTC 2050 exige restituir la resistencia al fuego en todo paso de canalización por elementos cortafuego, para que la instalación no se vuelva un camino de propagación entre pisos.',
+        REF.NTC_PROPAGACION_FUEGO,
+      ),
+      notaNormaVerificar(
+        'El tablero general de acometidas y su ramal vertical siguen la ficha del operador de red en cuanto a barrajes, espacio y accesibilidad; conviene contrastarla antes de fijar la sección del ducto.',
+        REF.LK_TABLERO_GENERAL_ACOMETIDAS,
+      ),
       notaNormaVerificar(
         'La separación entre soportes y el porcentaje máximo de ocupación de la canalización vertical están reglados; verificar los valores aplicables al tipo de canalización elegido antes de cerrar el modelado.',
         REF.CANALIZACIONES,
@@ -393,6 +441,14 @@ export const CATALOGO_02: TareaCatalogo[] = [
         REF.SPT_COMPONENTES,
       ),
       notaNorma(
+        'La instalación del electrodo de puesta a tierra del sistema —profundidad, unión con otros electrodos y accesibilidad de la conexión— está reglada en el Art. 250-81 de la NTC 2050.',
+        REF.NTC_ELECTRODO,
+      ),
+      notaNormaVerificar(
+        'El calibre del conductor del electrodo de puesta a tierra se toma de la tabla del Art. 250-94, en función del calibre de los conductores de acometida; no se elige por criterio.',
+        REF.NTC_CALIBRE_ELECTRODO,
+      ),
+      notaNorma(
         'El conductor de puesta a tierra no puede llevar dispositivos de maniobra ni de protección que puedan interrumpirlo: la continuidad del sistema es un requisito general de la puesta a tierra.',
         REF.SPT_GENERAL,
       ),
@@ -446,6 +502,10 @@ export const CATALOGO_02: TareaCatalogo[] = [
       notaNormaVerificar(
         'El valor máximo de resistencia de puesta a tierra aplicable depende del tipo de instalación y está tabulado en el RETIE; no es un dato que se asuma durante el modelado ni que se derive del retículo dibujado. Confirmarlo contra el diseño y el estudio de resistividad del proyecto.',
         REF.SPT_RESISTENCIA,
+      ),
+      notaNormaVerificar(
+        'Los electrodos fabricados (varillas, tubos, placas) tienen material, longitud mínima y separación reglados en el Art. 250-83 de la NTC 2050; el Art. 250-84 fija qué hacer cuando un solo electrodo no alcanza el valor de resistencia esperado.',
+        REF.NTC_ELECTRODOS_FABRICADOS,
       ),
       notaNorma(
         'La resistencia de puesta a tierra debe medirse con métodos y equipos definidos por la norma una vez construida la malla; las cajas de inspección modeladas son las que hacen posible esa medición.',
@@ -507,6 +567,18 @@ export const CATALOGO_02: TareaCatalogo[] = [
       notaNormaVerificar(
         'La separación entre circuitos de iluminación, tomas y cargas dedicadas, y la carga máxima admisible por circuito, salen del diseño y del código eléctrico aplicable. Un error aquí se replica en todas las unidades de la tipología, así que conviene validarlo antes de copiar.',
         REF.INSTALACIONES_BASICAS,
+      ),
+      notaNormaVerificar(
+        'La NTC 2050 fija los circuitos ramales obligatorios de una unidad de vivienda: al menos dos circuitos de 20 A para pequeños electrodomésticos (cocina y comedor), uno propio para lavandería y los dedicados de estufa y secadora. Esa es la base de la tipología, antes de repartir salidas.',
+        REF.NTC_PEQUENOS_ELECTRO,
+      ),
+      notaNormaVerificar(
+        'La carga permisible de un circuito ramal está limitada en función de su capacidad nominal: un circuito de tomas de uso general no admite cualquier número de salidas.',
+        REF.NTC_CARGAS_PERMISIBLES,
+      ),
+      notaNorma(
+        'Cada habitación de la vivienda tiene salidas de alumbrado obligatorias y control desde interruptor de pared reglado en el Art. 210-70; no basta con tomas.',
+        REF.NTC_SALIDAS_ALUMBRADO,
       ),
       notaNorma(
         'Cada circuito ramal debe quedar protegido contra sobrecorrientes; el circuito tipo debe nacer ya con su protección asignada, no añadirla después de replicar.',
@@ -573,6 +645,18 @@ export const CATALOGO_02: TareaCatalogo[] = [
         'Los interruptores automáticos de baja tensión tienen requisitos propios de instalación, marcación y capacidad de corte en el RETIE; un breaker sin capacidad de corte adecuada al punto de instalación no cumple aunque su corriente nominal sea correcta.',
         REF.INTERRUPTORES_BT,
       ),
+      notaNormaVerificar(
+        'Un panel de distribución para circuitos ramales de alumbrado y artefactos tiene tope de dispositivos de protección por tablero y debe protegerse en su origen: los dos requisitos están en los Art. 384-15 y 384-16 de la NTC 2050 y condicionan cuántos circuitos caben realmente en el tablero modelado.',
+        REF.NTC_MAX_CIRCUITOS_TABLERO,
+      ),
+      notaNormaVerificar(
+        'La capacidad del interruptor se toma de los valores nominales normalizados del Art. 240-6; no existe el breaker de valor intermedio que a veces sale del cálculo.',
+        REF.NTC_CORRIENTES_NORMALIZADAS,
+      ),
+      notaNorma(
+        'Cada medio de desconexión debe quedar identificado con su carga de forma legible y permanente. En un tablero de vivienda eso es el directorio de circuitos, y la NTC 2050 lo exige en el Art. 110-22.',
+        REF.NTC_IDENT_DESCONEXION,
+      ),
       notaNorma(
         'Los tableros deben quedar rotulados de forma que se identifique cada circuito y su carga; el cuadro de cargas es parte del cumplimiento, no un adorno del plano.',
         REF.CELDAS_TABLEROS,
@@ -636,6 +720,14 @@ export const CATALOGO_02: TareaCatalogo[] = [
         REF.DPS,
       ),
       notaNorma(
+        'Los descargadores de sobretensiones tienen sección propia en la NTC 2050 (Sección 280): cuántos se requieren, cómo se seleccionan y dónde se conectan respecto del medio de desconexión de la acometida.',
+        REF.NTC_DPS,
+      ),
+      notaNormaVerificar(
+        'La ubicación del descargador dentro de la instalación está reglada, y de ella depende la longitud del conductor de conexión: un DPS bien elegido pero mal ubicado pierde eficacia.',
+        REF.NTC_DPS_UBICACION,
+      ),
+      notaNorma(
         'El sistema de protección contra rayos debe integrarse al sistema equipotencial de puesta a tierra de la edificación, no constituir una tierra separada.',
         REF.SPT_GENERAL,
       ),
@@ -693,6 +785,18 @@ export const CATALOGO_02: TareaCatalogo[] = [
         'Los tomacorrientes deben tener polo a tierra y una configuración de clavija normalizada; la altura de montaje y las distancias mínimas a puntos de agua dependen del tipo de espacio. Confirmar los valores aplicables al proyecto antes de fijar las alturas.',
         REF.TOMACORRIENTES,
       ),
+      notaNormaVerificar(
+        'La capacidad nominal y el tipo de tomacorriente admisibles dependen del circuito ramal que los alimenta: el Art. 410-56 de la NTC 2050 tabula qué configuración corresponde a cada amperaje. Es lo que decide la familia de Revit que se usa, no la estética.',
+        REF.NTC_TOMAS_CAPACIDAD,
+      ),
+      notaNorma(
+        'El tomacorriente con polo a tierra debe quedar conectado al conductor de puesta a tierra de equipos del circuito; la conexión del terminal de tierra a la caja también está reglada.',
+        REF.NTC_TOMAS_POLO_TIERRA,
+      ),
+      notaNorma(
+        'En lugares húmedos o mojados —exteriores, terrazas, cuartos de máquinas, zonas de piscina— el tomacorriente debe llevar tapa con el grado de protección que exige el Art. 410-57, no una tapa cualquiera.',
+        REF.NTC_TOMAS_HUMEDOS,
+      ),
       notaNorma(
         'Las tomas de zonas húmedas, exteriores y accesibles requieren protección contra falla de aislamiento; el grado de protección de la envolvente debe corresponder al ambiente donde se instala.',
         REF.PROTECCION_AISLAMIENTO,
@@ -745,6 +849,10 @@ export const CATALOGO_02: TareaCatalogo[] = [
       notaNorma(
         'El espacio de trabajo frente a tableros debe permanecer libre; una toma de mantenimiento ubicada dentro de esa zona con una herramienta conectada la obstruye justo cuando más se necesita despejada.',
         REF.ESPACIOS_MONTAJE,
+      ),
+      notaNormaVerificar(
+        'El fondo, el ancho y la altura libres del espacio de trabajo frente al armario están tabulados en el Art. 110-16 de la NTC 2050: es una zona que no puede invadirse con tomas, tuberías ni mobiliario.',
+        REF.NTC_ESPACIO_TRABAJO,
       ),
       notaNorma(
         'Las tomas destinadas a herramienta portátil en cuartos técnicos requieren polo a tierra y protección contra falla de aislamiento.',
@@ -808,8 +916,20 @@ export const CATALOGO_02: TareaCatalogo[] = [
         REF.CAJAS_CONDULETAS,
       ),
       notaNormaVerificar(
-        'Las tablas de porcentaje de ocupación de canalizaciones y de capacidad de corriente son las de la NTC 2050.',
-        REF.NTC2050,
+        'El volumen mínimo de la caja se calcula contando conductores, dispositivos y accesorios según el Art. 370-16 de la NTC 2050. Una caja de 5800 elegida por costumbre puede quedar corta en cuanto entran tres circuitos.',
+        REF.NTC_VOLUMEN_CAJAS,
+      ),
+      notaNorma(
+        'Las cajas de paso y de empalme deben quedar accesibles sin romper el acabado; el Art. 370-29 lo exige explícitamente y es un hallazgo típico de inspección en obra terminada.',
+        REF.NTC_CAJAS_ACCESIBLES,
+      ),
+      notaNormaVerificar(
+        'El porcentaje de ocupación admisible está en el Cuadro 1 del Capítulo 9 de la NTC 2050 y el número máximo de conductores por diámetro, en los cuadros del Anexo C.',
+        REF.NTC_OCUPACION_TUBERIA,
+      ),
+      notaNormaVerificar(
+        'La capacidad de corriente del conductor sale del Art. 310-15, corregida por temperatura ambiente y por número de conductores en tensión dentro de la misma canalización.',
+        REF.NTC_AMPACIDAD,
       ),
     ],
     tipsRevit: [
@@ -866,6 +986,14 @@ export const CATALOGO_02: TareaCatalogo[] = [
       notaNorma(
         'El alumbrado de emergencia forma parte de los sistemas de emergencia y debe ser independiente del alumbrado normal; compartir canalización compromete esa independencia.',
         REF.SISTEMAS_EMERGENCIA,
+      ),
+      notaNorma(
+        'La Sección 700 de la NTC 2050 exige que el alambrado de emergencia sea independiente del normal, salvo las excepciones que ella misma lista: eso obliga a canalización separada, no solo a circuito separado.',
+        REF.NTC_EMERGENCIA,
+      ),
+      notaNorma(
+        'Las salidas de alumbrado obligatorias por espacio y su control están regladas en el Art. 210-70; el trazado de la tubería tiene que dar servicio a todas ellas.',
+        REF.NTC_SALIDAS_ALUMBRADO,
       ),
       notaNormaVerificar(
         'El porcentaje de ocupación y la accesibilidad de las cajas de paso aplican igual en iluminación que en fuerza; verificar los valores para el tipo de canalización usado en cielos falsos.',
@@ -928,6 +1056,10 @@ export const CATALOGO_02: TareaCatalogo[] = [
         'Los factores de demanda y coincidencia dependen del tipo de proyecto y de la normativa del operador de red local; no asumir valores fijos sin confirmarlos con el código eléctrico aplicable y sin dejarlos justificados en la memoria.',
         REF.CRITERIOS_DISENO,
       ),
+      notaNormaVerificar(
+        'Para el cálculo definitivo en vivienda multifamiliar, la NTC 2050 admite el método opcional del Art. 220-32 y, cuando la empresa local de energía tiene reglamentación propia, el cálculo del Art. 220-37. Dejar escrito en la memoria cuál se aplicó y por qué.',
+        REF.NTC_OPCIONAL_OR,
+      ),
       notaNorma(
         'El transformador de potencia y distribución debe cumplir los requisitos de instalación del RETIE, que condicionan además el cuarto donde se aloja.',
         REF.TRANSFORMADORES,
@@ -984,6 +1116,10 @@ export const CATALOGO_02: TareaCatalogo[] = [
       notaNormaVerificar(
         'El área calculada es área LIBRE de paso: la rejilla y las lamas del dámper reducen el área efectiva respecto al hueco. Verificar el porcentaje de área libre del producto contra su ficha técnica antes de dar por buena la dimensión.',
         REF.COMPUERTAS_VENTILACION,
+      ),
+      notaNorma(
+        'El requisito de ventilación del recinto del transformador es de la NTC 2050 (Art. 450-9): el dámper es el medio, la norma fija que el calor de las pérdidas debe poder evacuarse.',
+        REF.NTC_TRANSFORMADOR_VENTILACION,
       ),
       notaNorma(
         'Las subestaciones de media tensión tipo interior o en edificaciones deben conservar sus condiciones de ventilación, grado de protección y resistencia al fuego de forma simultánea; una abertura mal resuelta satisface una y rompe otra.',

@@ -195,7 +195,7 @@ export const M3_LECCIONES: Leccion[] = [
       'Anotar cada tablero con su identificación, capacidad y tipo de alimentación (MT/BT), usando etiquetas ligadas a parámetros reales del panel.',
       'Insertar el panel schedule (tabla de planificación de tableros) asociado a cada tablero para mostrar el cuadro de cargas por circuito.',
       'Verificar que la suma de cargas del cuadro de cargas coincida con la carga total mostrada en el diagrama unifilar.',
-      'Formatear el panel schedule -columnas, factor de demanda, fases- según el estándar del estudio y los requisitos RETIE aplicables.',
+      'Formatear el panel schedule -columnas, factor de demanda, fases- según el estándar del estudio; el factor de demanda que se muestre debe ser el del artículo de la NTC 2050 que se aplicó (Art. 220-11 para alumbrado general, Art. 220-32 si se usó el método opcional de vivienda multifamiliar).',
       'Colocar el diagrama unifilar y los cuadros de carga en sus láminas correspondientes y referenciarlos cruzadamente con las plantas.',
     ],
     erroresFrecuentes: [
@@ -208,7 +208,7 @@ export const M3_LECCIONES: Leccion[] = [
       'Mantener el diagrama unifilar como reflejo directo de los Electrical Systems del modelo, no como un dibujo independiente y aparte.',
       'Estandarizar la plantilla de panel schedule del estudio para todos los proyectos: mismas columnas, mismo orden de fases.',
       'Cruzar el cuadro de cargas contra el cálculo de capacidad del transformador antes de entregar la documentación.',
-      'Documentar explícitamente el factor de demanda usado por tipo de carga, citando la norma aplicada (RETIE u otra vigente).',
+      'Documentar explícitamente el factor de demanda usado por tipo de carga citando el artículo exacto: NTC 2050 Art. 220-11 (alumbrado general), Art. 220-16 (pequeños electrodomésticos), Art. 220-19 (estufas) o Art. 220-32 (método opcional en vivienda multifamiliar). El RETIE remite a esos cuadros y no los reproduce, así que citar «RETIE» a secas no sirve para verificar el número.',
     ],
     ejemploAplicado:
       'La tarea "Elaborar los diagramas unifilares de media tensión, baja tensión y tableros del proyecto" (PB-03-03) es el caso directo: se construye el unifilar completo desde la subestación hasta cada tablero final, con el cuadro de cargas embebido en cada panel schedule, complementado con la tarea "Elaborar el plano de iluminación y tomas de apartamentos con cuadro de cargas y detalle de cocina" (PB-03-14), que exige el mismo tipo de cuadro de cargas a nivel de apartamento.',

@@ -41,6 +41,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('El plano de media tensión para el operador de red debe ser consistente con los requisitos de acometidas del RETIE y con la norma particular del operador, que puede ser más exigente.', REF.ACOMETIDAS),
+      notaNorma('El formato, los detalles y el alcance del plano que recibe el operador de red los fija su propia norma; en territorio de Enel Colombia, las fichas de acometidas eléctricas de Likinormas.', REF.LK_GENERALIDADES_ACOMETIDAS),
       notaNormaVerificar('Los requisitos aplicables a la red de distribución asociada dependen del punto de frontera acordado con el operador; confirmarlo antes de radicar.', REF.REDES_DISTRIBUCION),
     ],
     tipsRevit: [
@@ -87,6 +88,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('Los detalles de ingreso deben mostrar la protección mecánica de la canalización, el sellado del paso y el radio de curvatura del cable de media tensión.', REF.CANALIZACIONES),
+      notaNorma('Para el tramo enterrado, el Art. 300-5 de la NTC 2050 fija profundidad mínima de enterramiento y separación de otros servicios; el Art. 300-4, la protección donde el ducto emerge y queda expuesto a daño.', REF.NTC_SUBTERRANEAS),
       notaNorma('El ingreso de la acometida a la subestación es parte de la instalación cubierta por el título de acometidas del RETIE.', REF.ACOMETIDAS),
     ],
     tipsRevit: [
@@ -137,6 +139,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('El plano del cuarto de subestación debe acotar las distancias de seguridad y los pasillos de operación, no solo la posición de los equipos: es lo primero que revisa el operador de red.', REF.SUBESTACIONES_INTERIORES),
+      notaNormaVerificar('El plano tiene que acotar también el espacio libre de trabajo del Art. 110-16 de la NTC 2050 frente a cada equipo, que es distinto de las distancias de seguridad a partes energizadas.', REF.NTC_ESPACIO_TRABAJO),
       notaNorma('Los requisitos generales de subestaciones del RETIE aplican con independencia del tipo elegido y se suman a los del artículo específico del tipo.', REF.SUBESTACIONES_GENERAL),
     ],
     tipsRevit: [
@@ -183,6 +186,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNormaVerificar('El área de ventilación documentada debe ser área libre de paso y corresponder a las pérdidas térmicas del transformador definitivo, no al hueco del muro.', REF.COMPUERTAS_VENTILACION),
+      notaNorma('El requisito de fondo lo pone el Art. 450-9 de la NTC 2050: la ventilación debe poder evacuar el calor de las pérdidas del transformador en operación continua.', REF.NTC_TRANSFORMADOR_VENTILACION),
     ],
     tipsRevit: [
       'Usa una familia basada en cara (Face-based) o alojada en muro según el detalle constructivo real del dámper.',
@@ -229,6 +233,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Los cuartos de transformador con equipos en aceite requieren contención del líquido y condiciones de ventilación y resistencia al fuego definidas en el artículo de subestaciones de media tensión tipo interior.', REF.SUBESTACION_MT_INTERIOR),
+      notaNormaVerificar('La Sección 450 de la NTC 2050 cubre las bóvedas para transformadores —paredes, puertas y drenaje— y es la referencia para dimensionar el foso; el volumen exacto depende del aceite del equipo seleccionado.', REF.NTC_TRANSFORMADORES),
       notaNormaVerificar('El volumen del foso de contención depende del volumen de aceite del transformador seleccionado; tomarlo de la ficha técnica del equipo y no de un valor típico.', REF.TRANSFORMADORES),
     ],
     tipsRevit: [
@@ -275,6 +280,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('El plano de puesta a tierra debe mostrar el sistema completo y su integración equipotencial, incluidas las cajas de inspección que permiten medirlo.', REF.SPT_GENERAL),
+      notaNormaVerificar('El plano debe permitir verificar dos cosas que la NTC 2050 tabula: la instalación del electrodo (Art. 250-81) y el calibre del conductor del electrodo según el calibre de acometida (Art. 250-94).', REF.NTC_CALIBRE_ELECTRODO),
       notaNormaVerificar('El valor de resistencia de puesta a tierra exigido depende del tipo de instalación y está tabulado en el RETIE; el plano debe indicar el valor objetivo del diseño para que el inspector lo contraste con la medición.', REF.SPT_RESISTENCIA),
     ],
     tipsRevit: [
@@ -324,6 +330,7 @@ export const CATALOGO_06: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('El tramo entre la subestación y los armarios de medición hace parte de la acometida y se rige por su título en el RETIE además de por la norma del operador de red.', REF.ACOMETIDAS),
+      notaNorma('El armario de medidores y el tablero general de acometidas siguen las fichas del operador de red: dimensiones, barrajes y accesibilidad. En territorio de Enel Colombia son normas propias de Likinormas.', REF.LK_ARMARIO_MEDIDORES),
       notaNorma('Los armarios de medición y sus tableros deben cumplir los requisitos de celdas y tableros, incluida su identificación y accesibilidad.', REF.CELDAS_TABLEROS),
     ],
     tipsRevit: [

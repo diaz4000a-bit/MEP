@@ -46,6 +46,7 @@ export const CATALOGO_08: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Una rutina que renombra tableros y circuitos toca la identificación con la que se opera la instalación; debe respetar el esquema de rotulación exigido a celdas y tableros y no solo ser consistente consigo misma.', REF.CELDAS_TABLEROS),
+      notaNorma('El nombre no es cosmético: la NTC 2050 exige en el Art. 110-22 que cada medio de desconexión identifique la carga que controla. Una rutina que renumera sin actualizar el directorio deja la instalación mal identificada.', REF.NTC_IDENT_DESCONEXION),
       notaCriterio('Una rutina de renombrado masivo no tiene deshacer fiable sobre un modelo central: probarla siempre sobre una copia local antes de ejecutarla en el proyecto.'),
     ],
     tipsRevit: [
@@ -99,6 +100,7 @@ export const CATALOGO_08: TareaCatalogo[] = [
     ],
     notasIngenieria: [
       notaNorma('Las plantillas de vista son el lugar natural para fijar el código de colores de conductores y las convenciones normativas, de modo que se apliquen solas en cada proyecto nuevo.', REF.CODIGO_COLORES),
+      notaNorma('El color no lo decide el estudio: la identificación de conductores está reglada en el RETIE y en el Art. 310-12 de la NTC 2050. La plantilla solo debe reflejar lo que ya exigen las dos normas.', REF.NTC_IDENT_CONDUCTORES),
       notaCriterio('Una biblioteca de plantillas solo se mantiene viva si tiene un responsable y un versionado; si cada proyecto la modifica libremente deja de ser un estándar.'),
     ],
     tipsRevit: [
