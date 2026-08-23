@@ -89,6 +89,20 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /*
+   * Colores semánticos en modo claro. Estaban definidos SOLO en `.dark`, así que en el
+   * tema por defecto las utilidades text-estado-… caían a color heredado y las bg-… con
+   * modificador de opacidad a transparente: los badges de estado y el calendario se veían
+   * sin color. Mismos tonos que la paleta oscura, un paso más oscuros para contrastar
+   * sobre fondo blanco.
+   */
+  --estado-completada: #16a34a;
+  --estado-bloqueada: #dc2626;
+  --estado-revision: #9333ea;
+  --estado-progreso: #2563eb;
+  --prioridad-alta: #dc2626;
+  --prioridad-media: #d97706;
 }
 
 /*
