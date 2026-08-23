@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { colorAvance, ESTILO_ESTADO_PROYECTO, fechaLegible } from "@/lib/tareas";
+import { COLOR_SEMAFORO, ETIQUETA_SEMAFORO, semaforoProyectoResumen } from "@/lib/tramites";
 import type { Proyecto } from "@/types";
 
 export function ProyectoCard({ proyecto }: { proyecto: Proyecto }) {
+  // Se recalcula en cada render a partir de las métricas denormalizadas: el color depende
+  // del día de hoy, así que guardarlo lo dejaría desfasado sin ninguna escritura de por medio.
+  const semaforo = semaforoProyectoResumen(proyecto);
+
   return (
     <Link
       href={`/proyectos/${proyecto.id}`}
@@ -17,9 +22,19 @@ export function ProyectoCard({ proyecto }: { proyecto: Proyecto }) {
             {fechaLegible(proyecto.fechaEntrega)}
           </p>
         </div>
-        <Badge className={ESTILO_ESTADO_PROYECTO[proyecto.estado]} variant="secondary">
-          {proyecto.estado}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          {semaforo && (
+            <span
+              className={`size-2.5 rounded-full ${COLOR_SEMAFORO[semaforo]}`}
+              title={`Trámites: ${ETIQUETA_SEMAFORO[semaforo]}`}
+              aria-label={`Trámites: ${ETIQUETA_SEMAFORO[semaforo]}`}
+              role="img"
+            />
+          )}
+          <Badge className={ESTILO_ESTADO_PROYECTO[proyecto.estado]} variant="secondary">
+            {proyecto.estado}
+          </Badge>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -33,6 +48,11 @@ export function ProyectoCard({ proyecto }: { proyecto: Proyecto }) {
         <span className="text-sm text-muted-foreground">
           {proyecto.tareasCompletadas}/{proyecto.totalTareas} tareas
         </span>
+        {(proyecto.totalTramites ?? 0) > 0 && (
+          <span className="text-sm text-muted-foreground">
+            · {proyecto.tramitesAbiertos ?? 0}/{proyecto.totalTramites} trámites abiertos
+          </span>
+        )}
       </div>
     </Link>
   );

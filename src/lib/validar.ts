@@ -1,6 +1,16 @@
 import { CATEGORIAS } from "@/content/categorias";
 import { GRUPOS } from "@/content/grupos";
-import type { Categoria, EstadoTarea, GrupoId, Prioridad, Tarea } from "@/types";
+import { ESTADOS_TRAMITE, TIPOS_TRAMITE } from "@/content/tramites";
+import type {
+  Categoria,
+  EstadoTarea,
+  EstadoTramite,
+  GrupoId,
+  Prioridad,
+  Tarea,
+  TipoTramite,
+  Tramite,
+} from "@/types";
 
 /**
  * Validación de entrada para las Server Actions y saneado de documentos leídos.
@@ -271,4 +281,91 @@ export function trocear<T>(items: T[], tam = LIMITE_LOTE_FIRESTORE): T[][] {
   const lotes: T[][] = [];
   for (let i = 0; i < items.length; i += tam) lotes.push(items.slice(i, i + tam));
   return lotes;
+}
+
+/* ── Trámites ────────────────────────────────────────────────────────────────── */
+
+/** Cota dura del costo de un trámite, en COP. Por encima de esto el dato es un error de dedo. */
+const MAX_COSTO_TRAMITE = 10_000_000_000;
+
+/** Estados desde los que ya existe una radicación ante la entidad. */
+const ESTADOS_TRAMITE_RADICADOS: EstadoTramite[] = ["Radicado", "Subsanación", "Aprobado", "Rechazado"];
+
+export interface DatosTramite {
+  nombre: string;
+  tipo: TipoTramite;
+  entidad: string;
+  radicado: string;
+  estado: EstadoTramite;
+  responsableUid: string | null;
+  responsable: string;
+  fechaRadicacion: string;
+  fechaLimite: string;
+  fechaResolucion: string;
+  costo: number;
+  notas: string;
+}
+
+/** Normaliza y valida el payload de crear/actualizar trámite. Lanza `ErrorValidacion`. */
+export function validarDatosTramite(entrada: unknown): DatosTramite {
+  if (typeof entrada !== "object" || entrada === null) {
+    fallar("Los datos del trámite no tienen el formato esperado.");
+  }
+  const d = entrada as Record<string, unknown>;
+
+  const nombre = texto(d.nombre, "nombre");
+  if (!nombre) fallar("El nombre del trámite es obligatorio.");
+
+  const estado = unaDe(d.estado, ESTADOS_TRAMITE, "estado");
+  const fechaRadicacion = fechaValida(d.fechaRadicacion, "fechaRadicacion");
+  const fechaLimite = fechaValida(d.fechaLimite, "fechaLimite");
+  const fechaResolucion = fechaValida(d.fechaResolucion, "fechaResolucion");
+
+  // Un trámite no puede estar "Radicado" sin decir cuándo se radicó: esa fecha es el origen
+  // del plazo de respuesta y, sin ella, el semáforo no tiene contra qué medir.
+  if (ESTADOS_TRAMITE_RADICADOS.includes(estado) && !fechaRadicacion) {
+    fallar(`Un trámite en estado "${estado}" necesita fecha de radicación.`);
+  }
+  if (fechaRadicacion && fechaLimite && fechaLimite < fechaRadicacion) {
+    fallar("La fecha límite no puede ser anterior a la fecha de radicación.");
+  }
+  if (fechaRadicacion && fechaResolucion && fechaResolucion < fechaRadicacion) {
+    fallar("La fecha de resolución no puede ser anterior a la fecha de radicación.");
+  }
+
+  return {
+    nombre,
+    tipo: unaDe(d.tipo, TIPOS_TRAMITE, "tipo"),
+    entidad: texto(d.entidad, "entidad"),
+    radicado: texto(d.radicado, "radicado"),
+    estado,
+    responsableUid: textoOpcional(d.responsableUid, "responsableUid"),
+    responsable: texto(d.responsable, "responsable"),
+    fechaRadicacion,
+    fechaLimite,
+    // Solo un trámite cerrado tiene fecha de resolución. Conservarla al reabrirlo dejaba
+    // la ficha diciendo "resuelto el 3 de mayo" sobre un trámite otra vez en curso.
+    fechaResolucion: estado === "Aprobado" || estado === "Rechazado" ? fechaResolucion : "",
+    costo: decimal(d.costo, "costo", 0, MAX_COSTO_TRAMITE),
+    notas: texto(d.notas, "notas", MAX_TEXTO_LARGO),
+  };
+}
+
+/**
+ * Sanea el `historial` de un trámite leído de Firestore. Mismo motivo que en tareas: el
+ * informe HTML interpola estos valores, así que `f` sale siempre número y `e` siempre de
+ * la lista blanca de estados.
+ */
+export function sanearHistorialTramite(valor: unknown): Tramite["historial"] {
+  if (!Array.isArray(valor)) return [];
+  const out: Tramite["historial"] = [];
+  for (const item of valor) {
+    if (typeof item !== "object" || item === null) continue;
+    const h = item as Record<string, unknown>;
+    const f = Number(h.f);
+    if (!Number.isFinite(f)) continue;
+    const e = ESTADOS_TRAMITE.includes(h.e as EstadoTramite) ? (h.e as EstadoTramite) : "Sin iniciar";
+    out.push({ f: Math.trunc(f), e });
+  }
+  return out.slice(-TOPE_HISTORIAL);
 }

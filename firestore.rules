@@ -48,6 +48,14 @@ service cloud.firestore {
         // del proyecto padre y el registro en historial que hacen las Server Actions.
         allow write: if false;
       }
+
+      match /tramites/{trid} {
+        allow read:  if activo();
+        // Igual que tareas: crearTramite/actualizarTramite validan la coherencia entre
+        // estado y fechas (no hay "Radicado" sin fecha de radicación) y registran el
+        // historial. Escribir desde el cliente se saltaría ambas cosas.
+        allow write: if false;
+      }
     }
 
     match /jornadas/{jid} {

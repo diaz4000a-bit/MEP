@@ -1,6 +1,6 @@
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { adminDb } from "@/lib/firebase/admin";
-import type { Proyecto, Tarea } from "@/types";
+import type { Proyecto, Tarea, Tramite } from "@/types";
 
 function slug(nombre: string): string {
   return nombre
@@ -14,9 +14,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   await exigirUsuario();
 
   const proyectoRef = adminDb.doc(`proyectos/${id}`);
-  const [proyectoSnap, tareasSnap] = await Promise.all([
+  const [proyectoSnap, tareasSnap, tramitesSnap] = await Promise.all([
     proyectoRef.get(),
     proyectoRef.collection("tareas").orderBy("actualizado", "desc").get(),
+    proyectoRef.collection("tramites").orderBy("creado", "desc").get(),
   ]);
 
   if (!proyectoSnap.exists) {
@@ -25,9 +26,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const proyecto = proyectoSnap.data() as Proyecto;
   const tareas = tareasSnap.docs.map((d) => d.data() as Tarea);
+  const tramites = tramitesSnap.docs.map((d) => d.data() as Tramite);
 
   // Mismo formato que la v1: el proyecto lleva `tareas[]` plana, no la subcolección real.
-  const exportado = { ...proyecto, tareas };
+  // `tramites[]` es aditivo y la v1 no lo conocía, así que un consumidor antiguo lo ignora.
+  //
+  // OJO: `importarProyectoJSON` todavía NO lee `tramites[]` — exportar e importar de vuelta
+  // conserva las tareas pero pierde la cartera de trámites.
+  const exportado = { ...proyecto, tareas, tramites };
 
   return new Response(JSON.stringify(exportado, null, 2), {
     headers: {
