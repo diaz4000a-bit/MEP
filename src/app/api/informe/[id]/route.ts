@@ -1,9 +1,10 @@
 import { puede } from "@/lib/auth/roles";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { adminDb } from "@/lib/firebase/admin";
+import { type FilaActividad, recolectarActividadDelDia } from "@/lib/informe";
 import { formatearDuracion, formatearHora } from "@/lib/jornadas";
 import { computeAvance } from "@/lib/tareas";
-import { ZONA, fechaBogota, fechaLarga, fechaLegible, ventanaDelDia } from "@/lib/tiempo";
+import { ZONA, fechaBogota, fechaLarga, fechaLegible } from "@/lib/tiempo";
 import {
   DIAS_ALERTA_TRAMITE,
   diasRestantes,
@@ -13,7 +14,6 @@ import {
   semaforoTramite,
   type Semaforo,
 } from "@/lib/tramites";
-import { sanearHistorial } from "@/lib/validar";
 import type { EstadoTarea, EstadoTramite, Jornada, Proyecto, Tarea, Tramite } from "@/types";
 
 // Colores del tema oscuro de la app (globals.css) — el informe es un documento
@@ -49,63 +49,6 @@ function esc(valor: unknown): string {
 function iniciales(nombre: string): string {
   const partes = nombre.trim().split(/\s+/);
   return ((partes[0]?.[0] ?? "") + (partes[1]?.[0] ?? "")).toUpperCase() || "?";
-}
-
-interface FilaActividad {
-  tarea: string;
-  zona: string;
-  etapa: string;
-  inicio: number;
-  fin: number;
-  delta: number;
-  estado: EstadoTarea;
-  hora: number;
-  registros: number;
-}
-
-// Reúne, por responsable, las tareas con actividad (avance/estado) en una fecha dada.
-// Para cada tarea con varios registros ese día se reporta el movimiento neto del día.
-function recolectarActividadDelDia(tareas: Tarea[], fecha: string): Record<string, FilaActividad[]> {
-  // La ventana es el día de Bogotá, no el del runtime: en Vercel (UTC) recortaba de las
-  // 19:00 del día anterior a las 18:59 del día pedido, así que el turno de tarde caía en
-  // el informe del día siguiente mientras las jornadas (filtradas por el string `fecha`)
-  // sí usaban el día real.
-  const { inicioMs, finMs } = ventanaDelDia(fecha);
-  const mapa: Record<string, FilaActividad[]> = {};
-
-  for (const t of tareas) {
-    // `sanearHistorial` fuerza que `f`/`p` sean números y `e` un estado de la lista blanca.
-    // Este HTML interpola `p` y `f` SIN escapar (nadie escapa un número); si el documento
-    // trae strings ahí —posible vía import JSON— acaban dentro del HTML tal cual. Sanear al
-    // leer hace verdadero el tipo en vez de confiar en el `as Tarea` del snapshot.
-    const h = sanearHistorial(t.historial);
-    const dia: { de: number; a: number; e: EstadoTarea; f: number }[] = [];
-    // i === 0 es la foto inicial de creación/importación de la tarea, no trabajo real —
-    // si se cuenta, toda tarea creada/importada hoy aparece como "trabajada" aunque nadie
-    // la haya tocado (ver bug real: proyectos importados con 60+ tareas inundando el informe).
-    h.forEach((x, i) => {
-      if (i > 0 && x.f >= inicioMs && x.f <= finMs) dia.push({ de: h[i - 1].p, a: x.p, e: x.e, f: x.f });
-    });
-    if (dia.length === 0) continue;
-
-    const inicio = dia[0].de;
-    const ultimo = dia[dia.length - 1];
-    const resp = t.responsable || "Sin asignar";
-    (mapa[resp] ??= []).push({
-      tarea: t.nombre,
-      zona: t.zona || "",
-      etapa: t.etapa || "",
-      inicio,
-      fin: ultimo.a,
-      delta: ultimo.a - inicio,
-      estado: ultimo.e,
-      hora: ultimo.f,
-      registros: dia.length,
-    });
-  }
-
-  for (const filas of Object.values(mapa)) filas.sort((a, b) => a.hora - b.hora);
-  return mapa;
 }
 
 /**
